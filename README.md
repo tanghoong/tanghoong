@@ -1,28 +1,71 @@
-### Hi there 👋
+<div align="center">
 
-### 🤝🏻 Get in Touch
+## 📊 GitHub Stats
 
-<p>
-<a href="https://linkedin.com/in/tanghoong"><img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white"></a>
-<a href="https://medium.com/@tanghoong"><img src="https://img.shields.io/badge/Medium-0A0A0A?style=for-the-badge&logo=medium&logoColor=white"></a>
-<a href="https://dev.to/tanghoong_com"><img src="https://img.shields.io/badge/dev.to-0A0A0A?style=for-the-badge&logo=dev.to&logoColor=white"></a>
-<a href="mailto:hi@tanghoong.com"><img src="https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white"></a>
-</p>
+<!-- Theme-aware stats cards -->
+<picture>
+  <source 
+    srcset="https://github-readme-stats.vercel.app/api?username=tanghoong&show_icons=true&theme=dark&bg_color=00000000&hide_border=true&custom_title=Charlie%27s%20Performance"
+    media="(prefers-color-scheme: dark)"
+  />
+  <source
+    srcset="https://github-readme-stats.vercel.app/api?username=tanghoong&show_icons=true&theme=default&hide_border=true&custom_title=Charlie%27s%20Performance"
+    media="(prefers-color-scheme: light)"
+  />
+  <img height="170px" src="https://github-readme-stats.vercel.app/api?username=tanghoong&show_icons=true&theme=default&hide_border=true" />
+</picture>
 
-## My activity:
-![contrib graph](./profile-3d-contrib/profile-season-animate.svg)
+<picture>
+  <source 
+    srcset="https://github-readme-stats.vercel.app/api/top-langs/?username=tanghoong&layout=compact&theme=dark&bg_color=00000000&hide_border=true"
+    media="(prefers-color-scheme: dark)"
+  />
+  <source
+    srcset="https://github-readme-stats.vercel.app/api/top-langs/?username=tanghoong&layout=compact&theme=default&hide_border=true"
+    media="(prefers-color-scheme: light)"
+  />
+  <img height="170px" src="https://github-readme-stats.vercel.app/api/top-langs/?username=tanghoong&layout=compact&theme=default&hide_border=true" />
+</picture>
 
-<!--
-**tanghoong/tanghoong** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+<!-- Theme-aware activity graph -->
+<picture>
+  <source
+    srcset="https://github-readme-activity-graph.vercel.app/graph?username=tanghoong&theme=github-dark&hide_border=true&area=true&bg_color=00000000"
+    media="(prefers-color-scheme: dark)"
+  />
+  <source
+    srcset="https://github-readme-activity-graph.vercel.app/graph?username=tanghoong&theme=minimal&hide_border=true&area=true"
+    media="(prefers-color-scheme: light)"
+  />
+  <img width="100%" src="https://github-readme-activity-graph.vercel.app/graph?username=tanghoong&theme=minimal&hide_border=true&area=true" />
+</picture>
 
-Here are some ideas to get you started:
+## 🏆 Contributions
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+<!-- Theme-aware 3D contribution calendar -->
+<picture>
+  <source 
+    srcset="./profile-3d-contrib/profile-night-rainbow.svg"
+    media="(prefers-color-scheme: dark)"
+  />
+  <source
+    srcset="./profile-3d-contrib/profile-season-animate.svg"
+    media="(prefers-color-scheme: light)"
+  />
+  <img width="100%" src="./profile-3d-contrib/profile-season-animate.svg" />
+</picture>
+
+<!-- Theme-aware streak stats -->
+<picture>
+  <source
+    srcset="https://streak-stats.demolab.com?user=tanghoong&theme=dark&hide_border=true&background=00000000"
+    media="(prefers-color-scheme: dark)"
+  />
+  <source
+    srcset="https://streak-stats.demolab.com?user=tanghoong&theme=default&hide_border=true"
+    media="(prefers-color-scheme: light)"
+  />
+  <img width="100%" src="https://streak-stats.demolab.com?user=tanghoong&theme=default&hide_border=true" />
+</picture>
+
+</div>
