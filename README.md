@@ -1,6 +1,17 @@
 <div align="center">
 
-## 📊 GitHub Stats
+<!-- Theme-aware streak stats -->
+<picture>
+  <source
+    srcset="https://streak-stats.demolab.com?user=tanghoong&theme=dark&hide_border=true&background=00000000"
+    media="(prefers-color-scheme: dark)"
+  />
+  <source
+    srcset="https://streak-stats.demolab.com?user=tanghoong&theme=default&hide_border=true"
+    media="(prefers-color-scheme: light)"
+  />
+  <img width="100%" src="https://streak-stats.demolab.com?user=tanghoong&theme=default&hide_border=true" />
+</picture>
 
 <!-- Theme-aware stats cards -->
 <picture>
@@ -40,8 +51,6 @@
   <img width="100%" src="https://github-readme-activity-graph.vercel.app/graph?username=tanghoong&theme=minimal&hide_border=true&area=true" />
 </picture>
 
-## 🏆 Contributions
-
 <!-- Theme-aware 3D contribution calendar -->
 <picture>
   <source 
@@ -53,19 +62,6 @@
     media="(prefers-color-scheme: light)"
   />
   <img width="100%" src="./profile-3d-contrib/profile-season-animate.svg" />
-</picture>
-
-<!-- Theme-aware streak stats -->
-<picture>
-  <source
-    srcset="https://streak-stats.demolab.com?user=tanghoong&theme=dark&hide_border=true&background=00000000"
-    media="(prefers-color-scheme: dark)"
-  />
-  <source
-    srcset="https://streak-stats.demolab.com?user=tanghoong&theme=default&hide_border=true"
-    media="(prefers-color-scheme: light)"
-  />
-  <img width="100%" src="https://streak-stats.demolab.com?user=tanghoong&theme=default&hide_border=true" />
 </picture>
 
 </div>
