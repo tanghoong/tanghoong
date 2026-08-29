@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340" height="200" viewBox="0 0 340 200" fill="none" role="img" preserveAspectRatio="xMidYMid meet">
+  <rect x="0.5" y="0.5" width="339" height="199" rx="6" fill="none" stroke="#d1d9e0"/>
+  <text x="25" y="33" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#0969da">Most Used Languages</text>
+  <mask id="bar"><rect x="25" y="52" width="290" height="9" rx="4.5" fill="#fff"/></mask>
+  <g mask="url(#bar)">
+  <rect x="25" y="52" width="290" height="9" fill="#d1d9e0"/>
+  <rect x="25" y="52" width="91.48" height="9" rx="2" fill="#3572A5"/>
+  <rect x="117.48" y="52" width="67.5" height="9" rx="2" fill="#3178c6"/>
+  <rect x="185.98" y="52" width="47.4" height="9" rx="2" fill="#4F5D95"/>
+  <rect x="234.38" y="52" width="37.19" height="9" rx="2" fill="#e34c26"/>
+  <rect x="272.57" y="52" width="13.24" height="9" rx="2" fill="#f1e05a"/>
+  <rect x="286.81" y="52" width="7.38" height="9" rx="2" fill="#663399"/>
+  </g>
+  <circle cx="30" cy="86" r="5" fill="#3572A5"/>
+  <text x="42" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328">Python</text>
+  <text x="153" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#59636e" text-anchor="end">31.89%</text>
+  <circle cx="178" cy="86" r="5" fill="#3178c6"/>
+  <text x="190" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328">TypeScript</text>
+  <text x="301" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#59636e" text-anchor="end">23.62%</text>
+  <circle cx="30" cy="112" r="5" fill="#4F5D95"/>
+  <text x="42" y="116" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328">PHP</text>
+  <text x="153" y="116" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#59636e" text-anchor="end">16.69%</text>
+  <circle cx="178" cy="112" r="5" fill="#e34c26"/>
+  <text x="190" y="116" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328">HTML</text>
+  <text x="301" y="116" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#59636e" text-anchor="end">13.17%</text>
+  <circle cx="30" cy="138" r="5" fill="#f1e05a"/>
+  <text x="42" y="142" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328">JavaScript</text>
+  <text x="153" y="142" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#59636e" text-anchor="end">4.91%</text>
+  <circle cx="178" cy="138" r="5" fill="#663399"/>
+  <text x="190" y="142" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328">CSS</text>
+  <text x="301" y="142" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#59636e" text-anchor="end">2.89%</text>
+</svg>
