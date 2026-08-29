@@ -12,6 +12,7 @@
  *   ACTIVITY_DAYS     Days in the activity chart (default: 30)
  *   ACCENT            "green" (default) or "blue" -- drives every data mark
  *   ANIMATE           "1" (default) or "0" to emit static cards
+ *   CALENDAR_STYLE    "blocks" (default) or "city" for the skyline calendar
  */
 
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -27,6 +28,7 @@ const TITLE = process.env.CARD_TITLE || `${USERNAME}'s Performance`;
 const ACTIVITY_DAYS = Number(process.env.ACTIVITY_DAYS || 30);
 const ACCENT = process.env.ACCENT === 'blue' ? 'blue' : 'green';
 const ANIMATE = process.env.ANIMATE !== '0';
+const CALENDAR_STYLE = process.env.CALENDAR_STYLE === 'city' ? 'city' : 'blocks';
 
 if (!TOKEN) {
   console.error('GITHUB_TOKEN is required');
@@ -118,6 +120,10 @@ const THEMES = {
     areaOpacity: 0.16,
     faceLeft: 0.72,
     faceRight: 0.87,
+    // City: asphalt, and storey bands that read as glass catching the light.
+    road: '#e8e8ed',
+    windowLeft: 0.52,
+    windowRight: 0.66,
   }),
   dark: makeTheme('dark', {
     surface: '#1c1c1e',
@@ -133,6 +139,11 @@ const THEMES = {
     areaOpacity: 0.22,
     faceLeft: 0.62,
     faceRight: 0.8,
+    // City at night: storeys are brighter than their wall, so they read as lit
+    // windows -- still the one accent, never a warm second colour (§2).
+    road: '#101013',
+    windowLeft: 0.92,
+    windowRight: 1.12,
   }),
 };
 
@@ -146,8 +157,8 @@ const FONT =
 /**
  * §6: the iOS deceleration curve and the three duration tokens -- nothing here
  * invents its own timing. Keyframes declare only `from`, so each element's own
- * attributes are the resting state, which is what makes the reduced-motion
- * kill switch below land on a complete card rather than a hidden one.
+ * attributes are the resting state, which is what lets the opt-in gate below
+ * fall back to a complete card rather than a hidden one.
  */
 const EASE = 'cubic-bezier(.22, 1, .36, 1)';
 const MOTION = `
@@ -803,10 +814,15 @@ function activityCard(data, t) {
  * transform and painted back-to-front.
  */
 function calendarCard(data, t) {
+  const CITY = CALENDAR_STYLE === 'city';
   const HW = 13; // half width of a tile diamond
   const HH = 4.5; // half height; flatter than a true 2:1 isometric so the
   //                 53-week band does not run away down the card
-  const MAX_H = 44; // tallest box, in user units
+  // The city needs far more vertical range than the blocks do -- towers are
+  // what make it read as a skyline rather than a bar chart.
+  const MAX_H = CITY ? 92 : 44;
+  const PLOT = 0.62; // building footprint as a share of its tile; the margin
+  //                    left over is what reads as the street grid
   const WEEKS = 53;
 
   // Rebuild GitHub's own grid: 53 columns ending on today, each starting on a
@@ -833,7 +849,71 @@ function calendarCard(data, t) {
   const level = (c) => (c === 0 ? 0 : Math.min(4, Math.ceil((c / max) * 4)));
   // A gentle power curve keeps single-contribution days visible next to a
   // three-figure spike.
-  const heightFor = (c) => (c === 0 ? 0 : 3 + Math.pow(c / max, 0.6) * MAX_H);
+  const heightFor = (c) =>
+    c === 0 ? 0 : CITY ? 5 + Math.pow(c / max, 0.5) * MAX_H : 3 + Math.pow(c / max, 0.6) * MAX_H;
+
+  /**
+   * One city block. The tile is drawn full-width as ground, and the tower is
+   * inset to PLOT of it -- the leftover margin between neighbours is the road,
+   * so the street grid comes for free from the calendar's own 53x7 layout.
+   *
+   * Storeys are horizontal bands across the two visible faces rather than
+   * individual windows: at ~370 buildings, per-window quads run to six figures
+   * of polygons, while bands cost one quad per floor per face and read the
+   * same at this scale.
+   */
+  const cityBlock = (cell) => {
+    const X = (cell.w - cell.d) * HW;
+    const Y = (cell.w + cell.d) * HH;
+    const h = heightFor(cell.count);
+    const base = t.levels[level(cell.count)];
+    const out = [];
+
+    // Ground first: an empty day is a vacant lot, which keeps the grid legible.
+    out.push(
+      `  <polygon points="${X},${round(Y)} ${round(X + HW)},${round(Y + HH)} ${X},${round(Y + 2 * HH)} ${round(X - HW)},${round(Y + HH)}" fill="${t.road}"/>`
+    );
+    if (h === 0) return out;
+
+    const bw = HW * PLOT;
+    const bh = HH * PLOT;
+    const cy = Y + HH; // tile centre, where the footprint is anchored
+    const left = shade(base, t.faceLeft);
+    const right = shade(base, t.faceRight);
+
+    // Footprint corners, clockwise from the west corner.
+    const W_ = [X - bw, cy];
+    const S_ = [X, cy + bh];
+    const E_ = [X + bw, cy];
+
+    out.push(
+      `  <polygon points="${round(W_[0])},${round(W_[1] - h)} ${round(S_[0])},${round(S_[1] - h)} ${round(S_[0])},${round(S_[1])} ${round(W_[0])},${round(W_[1])}" fill="${left}"/>`,
+      `  <polygon points="${round(S_[0])},${round(S_[1] - h)} ${round(E_[0])},${round(E_[1] - h)} ${round(E_[0])},${round(E_[1])} ${round(S_[0])},${round(S_[1])}" fill="${right}"/>`
+    );
+
+    // Storey bands, only once a tower is tall enough to have them read.
+    if (h > 16) {
+      const floors = Math.min(6, Math.floor(h / 11));
+      const band = 2.2;
+      for (let f = 1; f <= floors; f++) {
+        const v = (h / (floors + 1)) * f;
+        for (const [a, b, tint] of [
+          [W_, S_, t.windowLeft],
+          [S_, E_, t.windowRight],
+        ]) {
+          out.push(
+            `  <polygon points="${round(a[0])},${round(a[1] - v - band)} ${round(b[0])},${round(b[1] - v - band)} ${round(b[0])},${round(b[1] - v)} ${round(a[0])},${round(a[1] - v)}" fill="${shade(base, tint)}"/>`
+          );
+        }
+      }
+    }
+
+    // Roof last, so it sits over both faces.
+    out.push(
+      `  <polygon points="${X},${round(cy - bh - h)} ${round(E_[0])},${round(E_[1] - h)} ${X},${round(S_[1] - h)} ${round(W_[0])},${round(W_[1] - h)}" fill="${base}"/>`
+    );
+    return out;
+  };
 
   // Painter's algorithm: in this projection a larger (w + d) sits nearer the
   // viewer, so drawing diagonals in ascending order layers the boxes
@@ -853,6 +933,7 @@ function calendarCard(data, t) {
         .get(key)
         .sort((a, b) => a.w - b.w)
         .flatMap((cell) => {
+          if (CITY) return cityBlock(cell);
           const X = (cell.w - cell.d) * HW;
           const Y = (cell.w + cell.d) * HH;
           const h = heightFor(cell.count);
