@@ -36,98 +36,148 @@ if (!TOKEN) {
 /* ---------------------------------------------------------- design tokens */
 
 /**
- * One shared geometry and type scale for every card, so the set reads as a
- * single system rather than a pile of unrelated boxes. Every card is
- * full-bleed at the same width, which is what keeps their corners aligned
- * once GitHub scales them to the README column.
+ * Geometry, on the design system's 4px space scale (03-DESIGN-SYSTEM.md §4) --
+ * "never a magic number". Every card is full-bleed at the same width, which is
+ * what keeps their corners aligned once GitHub scales them to the README
+ * column. Radius is --r-lg, the system's card radius; per §5 nothing here has
+ * a 4px corner.
  */
 const D = {
-  w: 880, // every card is this wide, so every edge lines up
-  pad: 22,
-  radius: 6,
-  head: 62, // baseline where card content starts
-  type: { title: 14, label: 12, value: 12, caption: 10, big: 26, huge: 30 },
+  w: 880,
+  pad: 24, // --s-6
+  radius: 20, // --r-lg, "cards"
+  head: 64, // --s-16, baseline where card content starts
+  type: { title: 14, label: 12, value: 12, caption: 10, big: 20, huge: 30 },
+};
+
+/** Tracking from §3.3, in ems -- applied against each element's own size. */
+const TRACK = { title: -0.014, body: -0.006, stat: -0.03, eyebrow: 0.07 };
+
+const hslToHex = (h, s, l) => {
+  const a = (s / 100) * Math.min(l / 100, 1 - l / 100);
+  const f = (n) => {
+    const k = (n + h / 30) % 12;
+    const v = l / 100 - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return Math.round(255 * v)
+      .toString(16)
+      .padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
 };
 
 /**
- * A single accent ramp drives every data mark on every card -- the ring, the
- * activity area and the calendar all share it, so the set reads as one theme
- * instead of three. Language colours are the exception: those are GitHub's
- * own per-language identities and carry meaning.
+ * §2: there is exactly ONE accent, and it is green. Every data mark on every
+ * card -- the ring, the activity area, the language bar and the calendar -- is
+ * a shade of it, generated here rather than hand-picked.
+ *
+ * The doc is explicit that a palette of six colours is what makes a page look
+ * like a bootcamp project, so the language bar uses this ramp too instead of
+ * GitHub's per-language identity colours.
+ *
+ * `t` runs 0 (weakest) to 1 (the accent itself). Light and dark move in
+ * opposite directions because the accent is deliberately asymmetric: a deep
+ * green carries on white, a vivid green carries on black.
  */
-const RAMPS = {
-  green: {
-    light: ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
-    dark: ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'],
-  },
-  blue: {
-    light: ['#ebedf0', '#c6e0ff', '#79b8ff', '#2b7de9', '#0a4f9e'],
-    dark: ['#161b22', '#0d2d4f', '#12508c', '#1f6feb', '#58a6ff'],
-  },
+const SCALES = {
+  green: { light: [160, 95, 23], dark: [146, 100, 65] },
+  blue: { light: [212, 92, 43], dark: [212, 96, 66] },
 };
 
-// Primer colour tokens. Borders use the *muted* value so the cards sit
-// quietly on the profile page instead of framing themselves.
+const makeTheme = (mode, base) => {
+  const [h, s, l] = SCALES[ACCENT][mode];
+  const shadeAt =
+    mode === 'light'
+      ? (t) => hslToHex(h, s - (1 - t) * 34, 80 - t * (80 - l))
+      : (t) => hslToHex(h, s - (1 - t) * 28, 20 + t * (l - 20));
+  return {
+    ...base,
+    accent: hslToHex(h, s, l),
+    shadeAt,
+    // Calendar intensity: index 0 is an empty day, so it stays a neutral
+    // sunken surface rather than a faint green.
+    levels: [base.sunken, shadeAt(0.25), shadeAt(0.5), shadeAt(0.75), shadeAt(1)],
+    // Most-used language is the accent itself; each rank steps down the ramp.
+    langAt: (i, n) => shadeAt(1 - (i / Math.max(1, n - 1)) * 0.78),
+  };
+};
+
+// §2 tokens verbatim. Hairlines are a colour plus an opacity because SVG
+// presentation attributes take them separately.
 const THEMES = {
-  light: {
-    levels: RAMPS[ACCENT].light,
-    accent: ACCENT === 'blue' ? '#0969da' : '#2da44e',
-    title: '#1f2328',
-    text: '#1f2328',
-    muted: '#59636e',
-    faint: '#818b98',
-    border: '#d8dee4',
-    divider: '#e4e8ec',
-    track: '#e4e8ec',
+  light: makeTheme('light', {
+    surface: '#ffffff', // --bg-elevated
+    sunken: '#f5f5f7', // --bg-sunken
+    title: '#1d1d1f', // --text
+    text: '#1d1d1f',
+    muted: '#515154', // --text-2
+    faint: '#6e6e73', // --text-3
+    hairline: '#000000',
+    hairlineOpacity: 0.1,
+    softOpacity: 0.06,
+    track: '#f5f5f7',
     areaOpacity: 0.16,
-    faceLeft: 0.7,
-    faceRight: 0.85,
-  },
-  dark: {
-    levels: RAMPS[ACCENT].dark,
-    accent: ACCENT === 'blue' ? '#2f81f7' : '#39d353',
-    title: '#e6edf3',
-    text: '#e6edf3',
-    muted: '#8b949e',
-    faint: '#6e7681',
-    border: '#30363d',
-    divider: '#21262d',
-    track: '#21262d',
+    faceLeft: 0.72,
+    faceRight: 0.87,
+  }),
+  dark: makeTheme('dark', {
+    surface: '#1c1c1e',
+    sunken: '#0a0a0c',
+    title: '#f5f5f7',
+    text: '#f5f5f7',
+    muted: '#a1a1a6',
+    faint: '#86868b',
+    hairline: '#ffffff',
+    hairlineOpacity: 0.13,
+    softOpacity: 0.08,
+    track: '#2a2a2d',
     areaOpacity: 0.22,
     faceLeft: 0.62,
     faceRight: 0.8,
-  },
+  }),
 };
 
+// §3.1: the system stack, no web font. Family names are single-quoted -- these
+// go into a double-quoted SVG attribute, and a raw " would close it and blank
+// the whole card.
 const FONT =
-  "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif";
+  "-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI'," +
+  ' Roboto, system-ui, sans-serif';
 
 /**
- * Shared motion language: everything uses the same easing and the same small
- * set of entrances, staggered rather than simultaneous. Keyframes declare
- * only `from`, so the element's own attributes are the resting state -- which
- * is what lets prefers-reduced-motion simply switch the animations off and
- * still render a correct, complete card.
+ * §6: the iOS deceleration curve and the three duration tokens -- nothing here
+ * invents its own timing. Keyframes declare only `from`, so each element's own
+ * attributes are the resting state, which is what makes the reduced-motion
+ * kill switch below land on a complete card rather than a hidden one.
  */
-const EASE = 'cubic-bezier(.22,.61,.36,1)';
+const EASE = 'cubic-bezier(.22, 1, .36, 1)';
 const MOTION = `
-    .fade { animation: fade .55s ${EASE} both; }
-    .rise { animation: rise .6s ${EASE} both; }
-    .grow { animation: grow .8s ${EASE} both; }
-    .draw { animation: draw 1.4s ${EASE} both; }
-    @keyframes fade { from { opacity: 0; transform: translateY(6px); } }
-    @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
-    @keyframes grow { from { transform: scaleX(0); } }
-    @keyframes draw { from { stroke-dashoffset: 1; } }`;
+      .fade { animation: fade 260ms ${EASE} both; }
+      .rise { animation: rise 420ms ${EASE} both; }
+      .grow { animation: grow 420ms ${EASE} both; }
+      .draw { animation: draw 900ms ${EASE} both; }
+      @keyframes fade { from { opacity: 0; transform: translateY(6px); } }
+      @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+      @keyframes grow { from { transform: scaleX(0); } }
+      @keyframes draw { from { stroke-dashoffset: 1; } }`;
 
-// Emitted *after* any card-specific rules. A media query adds no specificity,
-// so if this came first a later `.sweep { animation: ... }` would win and the
-// card would still animate -- and render mid-flight for anyone who asked not
-// to see motion.
-const REDUCED = `
-    @media (prefers-reduced-motion: reduce) {
-      .fade, .rise, .grow, .draw, .sweep { animation: none !important; }
-    }`;
+/**
+ * §6.2: "the fallback is the correct state, never a hidden element waiting for
+ * a script that may not run -- content must never depend on animation."
+ *
+ * So motion is opt-IN behind `no-preference`, rather than opt-out behind
+ * `reduce`. Every entrance starts from `opacity: 0`, and an SVG is rendered by
+ * plenty of things that never tick an animation (image proxies, preview
+ * generators, screenshotters). Under a `reduce` kill switch those all show a
+ * blank card, because `both` fill paints the backwards state while an
+ * animation sits unstarted. Verified against a non-ticking renderer: with the
+ * rules opt-out the card renders HIDDEN, opt-in it renders VISIBLE.
+ *
+ * This also subsumes the kill switch -- a reduced-motion reader simply never
+ * matches, so no `!important` override is needed, and no `animation-delay`
+ * survives to stagger content in front of someone who asked for stillness.
+ */
+const motionBlock = (css = '') =>
+  `\n    @media (prefers-reduced-motion: no-preference) {${MOTION}${css}\n    }`;
 
 /* ------------------------------------------------------------------ utils */
 
@@ -354,17 +404,30 @@ function computeStreaks(days) {
 
 /* -------------------------------------------------------------- svg parts */
 
+/**
+ * `track` is a §3.3 tracking value in ems, resolved against this element's own
+ * size -- large type takes tighter tracking, eyebrows take looser.
+ */
 const text = (
   x,
   y,
   str,
-  { size = D.type.value, weight = 400, fill, anchor = 'start', spacing, cls, delay } = {}
+  {
+    size = D.type.value,
+    weight = 400,
+    fill,
+    anchor = 'start',
+    track = TRACK.body,
+    tabular = false,
+    cls,
+    delay,
+  } = {}
 ) =>
   `  <text x="${round(x)}" y="${round(y)}" font-family="${FONT}" font-size="${size}"` +
   ` font-weight="${weight}" fill="${fill}"` +
   (anchor === 'start' ? '' : ` text-anchor="${anchor}"`) +
-  (spacing ? ` letter-spacing="${spacing}"` : '') +
-  (cls ? anim(cls, delay) : '') +
+  (track ? ` letter-spacing="${round(track * size)}"` : '') +
+  (cls ? anim(cls, delay, tabular ? 'font-variant-numeric:tabular-nums' : '') : '') +
   `>${esc(str)}</text>`;
 
 /**
@@ -377,24 +440,27 @@ const card = (h, t, { title, subtitle, body, css = '', panels = [] }) => {
   const heads = panels.length ? panels : [{ x: D.pad, title, subtitle }];
 
   const parts = [
-    ANIMATE ? `  <style>${MOTION}${css}${REDUCED}\n  </style>` : null,
+    ANIMATE ? `  <style>${motionBlock(css)}\n  </style>` : null,
+    // §5 and §0.4 rule 5: separation by hairline over an elevated surface,
+    // never by shadow.
     `  <rect x="0.5" y="0.5" width="${W - 1}" height="${h - 1}" rx="${D.radius}"` +
-      ` fill="none" stroke="${t.border}"/>`,
+      ` fill="${t.surface}" stroke="${t.hairline}" stroke-opacity="${t.hairlineOpacity}"/>`,
     ...heads.flatMap((p, i) =>
       [
         p.title
-          ? text(p.x, p.subtitle ? 34 : 38, p.title, {
+          ? text(p.x, p.subtitle ? 36 : 40, p.title, {
               size: D.type.title,
               weight: 600,
               fill: t.title,
+              track: TRACK.title,
               cls: 'fade',
               delay: 0.04 * i,
             })
           : null,
         p.subtitle
-          ? text(p.x, 52, p.subtitle, {
+          ? text(p.x, 54, p.subtitle, {
               size: D.type.caption,
-              fill: t.muted,
+              fill: t.faint,
               cls: 'fade',
               delay: 0.04 * i + 0.06,
             })
@@ -447,9 +513,12 @@ function overviewCard(data, t) {
     Math.round((now - new Date(Date.UTC(now.getUTCFullYear(), 0, 1))) / 86400000) + 1
   );
   const frac = Math.min(1, activeDays / elapsed);
-  const rCirc = 36;
+  // A wider ring and a smaller figure inside it: at 26px the number crowded
+  // the stroke, so the ring grows and the figure drops to --big (20px),
+  // leaving clear space on all four sides.
+  const rCirc = 42;
   const circ = 2 * Math.PI * rCirc;
-  const cx = mid - D.pad - rCirc - 6;
+  const cx = mid - D.pad - rCirc - 4;
 
   const statRows = rows.map((r, i) => {
     const y = D.head + 14 + i * 19;
@@ -478,17 +547,19 @@ function overviewCard(data, t) {
       weight: 700,
       fill: t.text,
       anchor: 'middle',
+      track: TRACK.stat,
+      tabular: true,
       cls: 'fade',
       delay: 0.3,
     }),
-    text(cx, 136, 'active days', {
+    text(cx, 137, 'active days', {
       size: 9,
-      fill: t.muted,
+      fill: t.faint,
       anchor: 'middle',
       cls: 'fade',
       delay: 0.34,
     }),
-    text(cx, 180, `${Math.round(frac * 100)}% of ${currentYear}`, {
+    text(cx, 186, `${Math.round(frac * 100)}% of ${currentYear}`, {
       size: D.type.caption,
       fill: t.faint,
       anchor: 'middle',
@@ -502,12 +573,17 @@ function overviewCard(data, t) {
   const barY = D.head + 8;
   const colW = panelW / 2;
 
+  // §2 / §0.5: one accent, no palette of six. Rank drives the shade, so the
+  // bar also reads as a ranking rather than as six unrelated tags.
+  const n = data.languages.length;
+  const langColor = (i) => t.langAt(i, n);
+
   let offset = 0;
-  const segments = data.languages.map((l) => {
+  const segments = data.languages.map((l, i) => {
     const w = (l.percent / 100) * panelW;
     const seg =
       `  <rect x="${round(R + offset)}" y="${barY}"` +
-      ` width="${round(Math.max(w - 1, 0.5))}" height="8" fill="${l.color}"/>`;
+      ` width="${round(Math.max(w - 1, 0.5))}" height="8" fill="${langColor(i)}"/>`;
     offset += w;
     return seg;
   });
@@ -517,7 +593,7 @@ function overviewCard(data, t) {
     const y = barY + 42 + Math.floor(i / 2) * 27;
     const d = 0.34 + i * 0.05;
     return [
-      `  <circle cx="${round(x + 5)}" cy="${round(y - 4)}" r="5" fill="${l.color}"${anim('fade', d)}/>`,
+      `  <circle cx="${round(x + 5)}" cy="${round(y - 4)}" r="5" fill="${langColor(i)}"${anim('fade', d)}/>`,
       text(x + 17, y, l.name, {
         size: D.type.label,
         weight: 500,
@@ -538,7 +614,7 @@ function overviewCard(data, t) {
   });
 
   const body = [
-    `  <line x1="${mid}" y1="${D.head - 34}" x2="${mid}" y2="${H - 24}" stroke="${t.divider}"/>`,
+    `  <line x1="${mid}" y1="${D.head - 34}" x2="${mid}" y2="${H - 24}" stroke="${t.hairline}" stroke-opacity="${t.softOpacity}"/>`,
     ...statRows,
     ring,
     `  <mask id="bar"><rect x="${R}" y="${barY}" width="${panelW}" height="8" rx="4" fill="#fff"/></mask>`,
@@ -550,7 +626,9 @@ function overviewCard(data, t) {
   ].join('\n');
 
   return card(H, t, {
-    css: `\n    .sweep { animation: sweep 1.1s ${EASE} .2s both; }\n    @keyframes sweep { from { stroke-dashoffset: ${round(circ)}; } }`,
+    css:
+      `\n      .sweep { animation: sweep 420ms ${EASE} 120ms both; }` +
+      `\n      @keyframes sweep { from { stroke-dashoffset: ${round(circ)}; } }`,
     panels: [
       { x: L, title: TITLE },
       { x: R, title: 'Most Used Languages' },
@@ -580,6 +658,8 @@ function streakCard(data, t) {
         weight: 700,
         fill: t.text,
         anchor: 'middle',
+        track: TRACK.stat,
+        tabular: true,
         cls: 'rise',
         delay: d,
       }),
@@ -588,7 +668,7 @@ function streakCard(data, t) {
         weight: 600,
         fill: t.muted,
         anchor: 'middle',
-        spacing: 0.8,
+        track: TRACK.eyebrow,
         cls: 'fade',
         delay: d + 0.06,
       }),
@@ -603,8 +683,8 @@ function streakCard(data, t) {
   };
 
   const body = [
-    `  <line x1="${col}" y1="${D.head + 4}" x2="${col}" y2="${H - 22}" stroke="${t.divider}"/>`,
-    `  <line x1="${col * 2}" y1="${D.head + 4}" x2="${col * 2}" y2="${H - 22}" stroke="${t.divider}"/>`,
+    `  <line x1="${col}" y1="${D.head + 4}" x2="${col}" y2="${H - 22}" stroke="${t.hairline}" stroke-opacity="${t.softOpacity}"/>`,
+    `  <line x1="${col * 2}" y1="${D.head + 4}" x2="${col * 2}" y2="${H - 22}" stroke="${t.hairline}" stroke-opacity="${t.softOpacity}"/>`,
     panel(0, data.totals.contributions, 'TOTAL CONTRIBUTIONS', `${pretty(data.since)} - Present`),
     panel(1, current.length, 'CURRENT STREAK', range(current)),
     panel(2, longest.length, 'LONGEST STREAK', range(longest)),
@@ -654,7 +734,7 @@ function activityCard(data, t) {
     const gy = round(plot.top + plotH * f);
     return (
       `  <line x1="${plot.left}" y1="${gy}" x2="${plot.left + plotW}" y2="${gy}"` +
-      ` stroke="${t.divider}"/>\n` +
+      ` stroke="${t.hairline}" stroke-opacity="${t.softOpacity}"/>\n` +
       text(plot.left - 10, gy + 3.5, String(Math.round(max * (1 - f))), {
         size: 9,
         fill: t.faint,
@@ -861,6 +941,15 @@ function assertWellFormed(name, svg) {
     for (const [, attr] of tag.matchAll(/([a-zA-Z-]+)\s*=\s*"/g)) {
       if (seen.has(attr)) throw new Error(`${name}: duplicate "${attr}" attribute in ${tag}`);
       seen.add(attr);
+    }
+    // A well-formed tag is a name followed only by name="value" pairs. Testing
+    // that grammar catches a raw " inside a value, which silently closes its
+    // own attribute and renders the card as a blank image with no error
+    // anywhere. A quote-parity check does not: a stray pair keeps the count
+    // even.
+    const attrs = tag.replace(/^<[a-zA-Z][a-zA-Z0-9-]*/, '').replace(/\/?>$/, '');
+    if (!/^(\s+[a-zA-Z-][a-zA-Z0-9-:]*\s*=\s*"[^"]*")*\s*$/.test(attrs)) {
+      throw new Error(`${name}: malformed attributes in ${tag.slice(0, 140)}`);
     }
   }
   const open = (svg.match(/<(?!\/)[a-zA-Z][^>]*(?<!\/)>/g) || []).length;

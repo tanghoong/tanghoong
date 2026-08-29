@@ -1,66 +1,65 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="240" viewBox="0 0 880 240" fill="none" role="img" preserveAspectRatio="xMidYMid meet">
   <style>
-    .fade { animation: fade .55s cubic-bezier(.22,.61,.36,1) both; }
-    .rise { animation: rise .6s cubic-bezier(.22,.61,.36,1) both; }
-    .grow { animation: grow .8s cubic-bezier(.22,.61,.36,1) both; }
-    .draw { animation: draw 1.4s cubic-bezier(.22,.61,.36,1) both; }
-    @keyframes fade { from { opacity: 0; transform: translateY(6px); } }
-    @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
-    @keyframes grow { from { transform: scaleX(0); } }
-    @keyframes draw { from { stroke-dashoffset: 1; } }
-    @media (prefers-reduced-motion: reduce) {
-      .fade, .rise, .grow, .draw, .sweep { animation: none !important; }
+    @media (prefers-reduced-motion: no-preference) {
+      .fade { animation: fade 260ms cubic-bezier(.22, 1, .36, 1) both; }
+      .rise { animation: rise 420ms cubic-bezier(.22, 1, .36, 1) both; }
+      .grow { animation: grow 420ms cubic-bezier(.22, 1, .36, 1) both; }
+      .draw { animation: draw 900ms cubic-bezier(.22, 1, .36, 1) both; }
+      @keyframes fade { from { opacity: 0; transform: translateY(6px); } }
+      @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+      @keyframes grow { from { transform: scaleX(0); } }
+      @keyframes draw { from { stroke-dashoffset: 1; } }
     }
   </style>
-  <rect x="0.5" y="0.5" width="879" height="239" rx="6" fill="none" stroke="#30363d"/>
-  <text x="22" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#e6edf3" class="fade">Contribution Activity</text>
-  <text x="22" y="52" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#8b949e" class="fade" style="animation-delay:0.06s">Last 30 days · 907 contributions · peak 121 in a day</text>
+  <rect x="0.5" y="0.5" width="879" height="239" rx="20" fill="#1c1c1e" stroke="#ffffff" stroke-opacity="0.13"/>
+  <text x="24" y="36" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="14" font-weight="600" fill="#f5f5f7" letter-spacing="-0.2" class="fade">Contribution Activity</text>
+  <text x="24" y="54" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#86868b" letter-spacing="-0.06" class="fade" style="animation-delay:0.06s">Last 30 days · 907 contributions · peak 121 in a day</text>
   <linearGradient id="fade-grad" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#39d353" stop-opacity="0.55"/>
-    <stop offset="100%" stop-color="#39d353" stop-opacity="0"/>
+    <stop offset="0%" stop-color="#4dff9a" stop-opacity="0.55"/>
+    <stop offset="100%" stop-color="#4dff9a" stop-opacity="0"/>
   </linearGradient>
-  <line x1="44" y1="84" x2="850" y2="84" stroke="#21262d"/>
-  <text x="34" y="87.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="400" fill="#6e7681" text-anchor="end">121</text>
-  <line x1="44" y1="142" x2="850" y2="142" stroke="#21262d"/>
-  <text x="34" y="145.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="400" fill="#6e7681" text-anchor="end">61</text>
-  <line x1="44" y1="200" x2="850" y2="200" stroke="#21262d"/>
-  <text x="34" y="203.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="400" fill="#6e7681" text-anchor="end">0</text>
-  <path d="M 44 198.08 C 48.63 196.8, 62.53 196.48, 71.79 190.41 C 81.06 184.34, 90.32 169.8, 99.59 161.65 C 108.85 153.5, 118.11 137.53, 127.38 141.52 C 136.64 145.52, 145.91 176.35, 155.17 185.62 C 164.44 194.89, 173.7 197.44, 182.97 197.12 C 192.23 196.8, 201.49 192.33, 210.76 183.7 C 220.02 175.07, 229.29 157.34, 238.55 145.36 C 247.82 133.37, 257.08 122.03, 266.34 111.8 C 275.61 101.58, 284.87 84, 294.14 84 C 303.4 94.23, 312.67 155.42, 321.93 173.16 C 331.2 190.89, 340.46 186.42, 349.72 190.41 C 358.99 194.41, 368.25 196.17, 377.52 197.12 C 386.78 198.08, 396.05 200, 405.31 196.17 C 414.57 190.09, 423.84 165.65, 433.1 160.69 C 442.37 155.74, 451.63 164.37, 460.9 166.45 C 470.16 168.52, 479.43 174.91, 488.69 173.16 C 497.95 171.4, 507.22 163.09, 516.48 155.9 C 525.75 148.71, 535.01 130.98, 544.28 130.02 C 553.54 129.06, 562.8 145.04, 572.07 150.15 C 581.33 155.26, 590.6 153.98, 599.86 160.69 C 609.13 167.4, 618.39 190.73, 627.66 190.41 C 636.92 190.09, 646.18 158.62, 655.45 158.78 C 664.71 158.94, 673.98 184.5, 683.24 191.37 C 692.51 198.24, 701.77 198.56, 711.03 200 C 720.3 200, 729.56 200, 738.83 200 C 748.09 197.92, 757.36 191.69, 766.62 187.54 C 775.89 183.38, 785.15 173.64, 794.41 175.07 C 803.68 176.51, 812.94 195.69, 822.21 196.17 C 831.47 196.64, 845.37 180.99, 850 177.95 L 850 200 L 44 200 Z" fill="url(#fade-grad)" class="fade" style="animation-delay:0.75s"/>
-  <path d="M 44 198.08 C 48.63 196.8, 62.53 196.48, 71.79 190.41 C 81.06 184.34, 90.32 169.8, 99.59 161.65 C 108.85 153.5, 118.11 137.53, 127.38 141.52 C 136.64 145.52, 145.91 176.35, 155.17 185.62 C 164.44 194.89, 173.7 197.44, 182.97 197.12 C 192.23 196.8, 201.49 192.33, 210.76 183.7 C 220.02 175.07, 229.29 157.34, 238.55 145.36 C 247.82 133.37, 257.08 122.03, 266.34 111.8 C 275.61 101.58, 284.87 84, 294.14 84 C 303.4 94.23, 312.67 155.42, 321.93 173.16 C 331.2 190.89, 340.46 186.42, 349.72 190.41 C 358.99 194.41, 368.25 196.17, 377.52 197.12 C 386.78 198.08, 396.05 200, 405.31 196.17 C 414.57 190.09, 423.84 165.65, 433.1 160.69 C 442.37 155.74, 451.63 164.37, 460.9 166.45 C 470.16 168.52, 479.43 174.91, 488.69 173.16 C 497.95 171.4, 507.22 163.09, 516.48 155.9 C 525.75 148.71, 535.01 130.98, 544.28 130.02 C 553.54 129.06, 562.8 145.04, 572.07 150.15 C 581.33 155.26, 590.6 153.98, 599.86 160.69 C 609.13 167.4, 618.39 190.73, 627.66 190.41 C 636.92 190.09, 646.18 158.62, 655.45 158.78 C 664.71 158.94, 673.98 184.5, 683.24 191.37 C 692.51 198.24, 701.77 198.56, 711.03 200 C 720.3 200, 729.56 200, 738.83 200 C 748.09 197.92, 757.36 191.69, 766.62 187.54 C 775.89 183.38, 785.15 173.64, 794.41 175.07 C 803.68 176.51, 812.94 195.69, 822.21 196.17 C 831.47 196.64, 845.37 180.99, 850 177.95" fill="none" stroke="#39d353" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="0" class="draw" style="animation-delay:0.2s"/>
-  <circle cx="44" cy="198.08" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.25s"/>
-  <circle cx="71.79" cy="190.41" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.29s"/>
-  <circle cx="99.59" cy="161.65" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.33s"/>
-  <circle cx="127.38" cy="141.52" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.37s"/>
-  <circle cx="155.17" cy="185.62" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.41s"/>
-  <circle cx="182.97" cy="197.12" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.45s"/>
-  <circle cx="210.76" cy="183.7" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.49s"/>
-  <circle cx="238.55" cy="145.36" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.53s"/>
-  <circle cx="266.34" cy="111.8" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.57s"/>
-  <circle cx="294.14" cy="84" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.61s"/>
-  <circle cx="321.93" cy="173.16" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.65s"/>
-  <circle cx="349.72" cy="190.41" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.69s"/>
-  <circle cx="377.52" cy="197.12" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.73s"/>
-  <circle cx="405.31" cy="196.17" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.77s"/>
-  <circle cx="433.1" cy="160.69" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.81s"/>
-  <circle cx="460.9" cy="166.45" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.84s"/>
-  <circle cx="488.69" cy="173.16" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.88s"/>
-  <circle cx="516.48" cy="155.9" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.92s"/>
-  <circle cx="544.28" cy="130.02" r="2.5" fill="#39d353" class="fade" style="animation-delay:0.96s"/>
-  <circle cx="572.07" cy="150.15" r="2.5" fill="#39d353" class="fade" style="animation-delay:1s"/>
-  <circle cx="599.86" cy="160.69" r="2.5" fill="#39d353" class="fade" style="animation-delay:1.04s"/>
-  <circle cx="627.66" cy="190.41" r="2.5" fill="#39d353" class="fade" style="animation-delay:1.08s"/>
-  <circle cx="655.45" cy="158.78" r="2.5" fill="#39d353" class="fade" style="animation-delay:1.12s"/>
-  <circle cx="683.24" cy="191.37" r="2.5" fill="#39d353" class="fade" style="animation-delay:1.16s"/>
-  <circle cx="766.62" cy="187.54" r="2.5" fill="#39d353" class="fade" style="animation-delay:1.28s"/>
-  <circle cx="794.41" cy="175.07" r="2.5" fill="#39d353" class="fade" style="animation-delay:1.32s"/>
-  <circle cx="822.21" cy="196.17" r="2.5" fill="#39d353" class="fade" style="animation-delay:1.36s"/>
-  <circle cx="850" cy="177.95" r="2.5" fill="#39d353" class="fade" style="animation-delay:1.4s"/>
-  <text x="44" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="400" fill="#6e7681" text-anchor="middle" class="fade" style="animation-delay:0.9s">Jul 31</text>
-  <text x="155.17" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="400" fill="#6e7681" text-anchor="middle" class="fade" style="animation-delay:0.94s">Aug 4</text>
-  <text x="266.34" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="400" fill="#6e7681" text-anchor="middle" class="fade" style="animation-delay:0.98s">Aug 8</text>
-  <text x="377.52" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="400" fill="#6e7681" text-anchor="middle" class="fade" style="animation-delay:1.02s">Aug 12</text>
-  <text x="488.69" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="400" fill="#6e7681" text-anchor="middle" class="fade" style="animation-delay:1.07s">Aug 16</text>
-  <text x="599.86" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="400" fill="#6e7681" text-anchor="middle" class="fade" style="animation-delay:1.11s">Aug 20</text>
-  <text x="711.03" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="400" fill="#6e7681" text-anchor="middle" class="fade" style="animation-delay:1.15s">Aug 24</text>
-  <text x="850" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="400" fill="#6e7681" text-anchor="middle" class="fade" style="animation-delay:1.2s">Aug 29</text>
+  <line x1="46" y1="84" x2="848" y2="84" stroke="#ffffff" stroke-opacity="0.08"/>
+  <text x="36" y="87.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="end" letter-spacing="-0.05">121</text>
+  <line x1="46" y1="142" x2="848" y2="142" stroke="#ffffff" stroke-opacity="0.08"/>
+  <text x="36" y="145.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="end" letter-spacing="-0.05">61</text>
+  <line x1="46" y1="200" x2="848" y2="200" stroke="#ffffff" stroke-opacity="0.08"/>
+  <text x="36" y="203.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="end" letter-spacing="-0.05">0</text>
+  <path d="M 46 198.08 C 50.61 196.8, 64.44 196.48, 73.66 190.41 C 82.87 184.34, 92.09 169.8, 101.31 161.65 C 110.53 153.5, 119.75 137.53, 128.97 141.52 C 138.18 145.52, 147.4 176.35, 156.62 185.62 C 165.84 194.89, 175.06 197.44, 184.28 197.12 C 193.49 196.8, 202.71 192.33, 211.93 183.7 C 221.15 175.07, 230.37 157.34, 239.59 145.36 C 248.8 133.37, 258.02 122.03, 267.24 111.8 C 276.46 101.58, 285.68 84, 294.9 84 C 304.11 94.23, 313.33 155.42, 322.55 173.16 C 331.77 190.89, 340.99 186.42, 350.21 190.41 C 359.43 194.41, 368.64 196.17, 377.86 197.12 C 387.08 198.08, 396.3 200, 405.52 196.17 C 414.74 190.09, 423.95 165.65, 433.17 160.69 C 442.39 155.74, 451.61 164.37, 460.83 166.45 C 470.05 168.52, 479.26 174.91, 488.48 173.16 C 497.7 171.4, 506.92 162.93, 516.14 155.9 C 525.36 148.87, 534.57 132.09, 543.79 130.98 C 553.01 129.86, 562.23 144.24, 571.45 149.19 C 580.67 154.14, 589.89 153.82, 599.1 160.69 C 608.32 167.56, 617.54 190.73, 626.76 190.41 C 635.98 190.09, 645.2 158.62, 654.41 158.78 C 663.63 158.94, 672.85 184.5, 682.07 191.37 C 691.29 198.24, 700.51 198.56, 709.72 200 C 718.94 200, 728.16 200, 737.38 200 C 746.6 197.92, 755.82 191.69, 765.03 187.54 C 774.25 183.38, 783.47 173.64, 792.69 175.07 C 801.91 176.51, 811.13 195.69, 820.34 196.17 C 829.56 196.64, 843.39 180.99, 848 177.95 L 848 200 L 46 200 Z" fill="url(#fade-grad)" class="fade" style="animation-delay:0.75s"/>
+  <path d="M 46 198.08 C 50.61 196.8, 64.44 196.48, 73.66 190.41 C 82.87 184.34, 92.09 169.8, 101.31 161.65 C 110.53 153.5, 119.75 137.53, 128.97 141.52 C 138.18 145.52, 147.4 176.35, 156.62 185.62 C 165.84 194.89, 175.06 197.44, 184.28 197.12 C 193.49 196.8, 202.71 192.33, 211.93 183.7 C 221.15 175.07, 230.37 157.34, 239.59 145.36 C 248.8 133.37, 258.02 122.03, 267.24 111.8 C 276.46 101.58, 285.68 84, 294.9 84 C 304.11 94.23, 313.33 155.42, 322.55 173.16 C 331.77 190.89, 340.99 186.42, 350.21 190.41 C 359.43 194.41, 368.64 196.17, 377.86 197.12 C 387.08 198.08, 396.3 200, 405.52 196.17 C 414.74 190.09, 423.95 165.65, 433.17 160.69 C 442.39 155.74, 451.61 164.37, 460.83 166.45 C 470.05 168.52, 479.26 174.91, 488.48 173.16 C 497.7 171.4, 506.92 162.93, 516.14 155.9 C 525.36 148.87, 534.57 132.09, 543.79 130.98 C 553.01 129.86, 562.23 144.24, 571.45 149.19 C 580.67 154.14, 589.89 153.82, 599.1 160.69 C 608.32 167.56, 617.54 190.73, 626.76 190.41 C 635.98 190.09, 645.2 158.62, 654.41 158.78 C 663.63 158.94, 672.85 184.5, 682.07 191.37 C 691.29 198.24, 700.51 198.56, 709.72 200 C 718.94 200, 728.16 200, 737.38 200 C 746.6 197.92, 755.82 191.69, 765.03 187.54 C 774.25 183.38, 783.47 173.64, 792.69 175.07 C 801.91 176.51, 811.13 195.69, 820.34 196.17 C 829.56 196.64, 843.39 180.99, 848 177.95" fill="none" stroke="#4dff9a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="0" class="draw" style="animation-delay:0.2s"/>
+  <circle cx="46" cy="198.08" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.25s"/>
+  <circle cx="73.66" cy="190.41" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.29s"/>
+  <circle cx="101.31" cy="161.65" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.33s"/>
+  <circle cx="128.97" cy="141.52" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.37s"/>
+  <circle cx="156.62" cy="185.62" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.41s"/>
+  <circle cx="184.28" cy="197.12" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.45s"/>
+  <circle cx="211.93" cy="183.7" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.49s"/>
+  <circle cx="239.59" cy="145.36" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.53s"/>
+  <circle cx="267.24" cy="111.8" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.57s"/>
+  <circle cx="294.9" cy="84" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.61s"/>
+  <circle cx="322.55" cy="173.16" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.65s"/>
+  <circle cx="350.21" cy="190.41" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.69s"/>
+  <circle cx="377.86" cy="197.12" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.73s"/>
+  <circle cx="405.52" cy="196.17" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.77s"/>
+  <circle cx="433.17" cy="160.69" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.81s"/>
+  <circle cx="460.83" cy="166.45" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.84s"/>
+  <circle cx="488.48" cy="173.16" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.88s"/>
+  <circle cx="516.14" cy="155.9" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.92s"/>
+  <circle cx="543.79" cy="130.98" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:0.96s"/>
+  <circle cx="571.45" cy="149.19" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:1s"/>
+  <circle cx="599.1" cy="160.69" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:1.04s"/>
+  <circle cx="626.76" cy="190.41" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:1.08s"/>
+  <circle cx="654.41" cy="158.78" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:1.12s"/>
+  <circle cx="682.07" cy="191.37" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:1.16s"/>
+  <circle cx="765.03" cy="187.54" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:1.28s"/>
+  <circle cx="792.69" cy="175.07" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:1.32s"/>
+  <circle cx="820.34" cy="196.17" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:1.36s"/>
+  <circle cx="848" cy="177.95" r="2.5" fill="#4dff9a" class="fade" style="animation-delay:1.4s"/>
+  <text x="46" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:0.9s">Jul 31</text>
+  <text x="156.62" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:0.94s">Aug 4</text>
+  <text x="267.24" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:0.98s">Aug 8</text>
+  <text x="377.86" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:1.02s">Aug 12</text>
+  <text x="488.48" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:1.07s">Aug 16</text>
+  <text x="599.1" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:1.11s">Aug 20</text>
+  <text x="709.72" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:1.15s">Aug 24</text>
+  <text x="848" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:1.2s">Aug 29</text>
 </svg>

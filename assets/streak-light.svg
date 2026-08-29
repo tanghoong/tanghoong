@@ -1,28 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="168" viewBox="0 0 880 168" fill="none" role="img" preserveAspectRatio="xMidYMid meet">
   <style>
-    .fade { animation: fade .55s cubic-bezier(.22,.61,.36,1) both; }
-    .rise { animation: rise .6s cubic-bezier(.22,.61,.36,1) both; }
-    .grow { animation: grow .8s cubic-bezier(.22,.61,.36,1) both; }
-    .draw { animation: draw 1.4s cubic-bezier(.22,.61,.36,1) both; }
-    @keyframes fade { from { opacity: 0; transform: translateY(6px); } }
-    @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
-    @keyframes grow { from { transform: scaleX(0); } }
-    @keyframes draw { from { stroke-dashoffset: 1; } }
-    @media (prefers-reduced-motion: reduce) {
-      .fade, .rise, .grow, .draw, .sweep { animation: none !important; }
+    @media (prefers-reduced-motion: no-preference) {
+      .fade { animation: fade 260ms cubic-bezier(.22, 1, .36, 1) both; }
+      .rise { animation: rise 420ms cubic-bezier(.22, 1, .36, 1) both; }
+      .grow { animation: grow 420ms cubic-bezier(.22, 1, .36, 1) both; }
+      .draw { animation: draw 900ms cubic-bezier(.22, 1, .36, 1) both; }
+      @keyframes fade { from { opacity: 0; transform: translateY(6px); } }
+      @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+      @keyframes grow { from { transform: scaleX(0); } }
+      @keyframes draw { from { stroke-dashoffset: 1; } }
     }
   </style>
-  <rect x="0.5" y="0.5" width="879" height="167" rx="6" fill="none" stroke="#d8dee4"/>
-  <text x="22" y="38" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1f2328" class="fade">Contribution Streak</text>
-  <line x1="293.3333333333333" y1="66" x2="293.3333333333333" y2="146" stroke="#e4e8ec"/>
-  <line x1="586.6666666666666" y1="66" x2="586.6666666666666" y2="146" stroke="#e4e8ec"/>
-  <text x="146.67" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="30" font-weight="700" fill="#1f2328" text-anchor="middle" class="rise" style="animation-delay:0.12s">5,430</text>
-  <text x="146.67" y="130" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="600" fill="#59636e" text-anchor="middle" letter-spacing="0.8" class="fade" style="animation-delay:0.18s">TOTAL CONTRIBUTIONS</text>
-  <text x="146.67" y="147" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#818b98" text-anchor="middle" class="fade" style="animation-delay:0.22s">Jun 24, 2013 - Present</text>
-  <text x="440" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="30" font-weight="700" fill="#1f2328" text-anchor="middle" class="rise" style="animation-delay:0.24s">4</text>
-  <text x="440" y="130" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="600" fill="#59636e" text-anchor="middle" letter-spacing="0.8" class="fade" style="animation-delay:0.3s">CURRENT STREAK</text>
-  <text x="440" y="147" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#818b98" text-anchor="middle" class="fade" style="animation-delay:0.34s">Aug 26, 2026 - Aug 29, 2026</text>
-  <text x="733.33" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="30" font-weight="700" fill="#1f2328" text-anchor="middle" class="rise" style="animation-delay:0.36s">69</text>
-  <text x="733.33" y="130" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="600" fill="#59636e" text-anchor="middle" letter-spacing="0.8" class="fade" style="animation-delay:0.42s">LONGEST STREAK</text>
-  <text x="733.33" y="147" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#818b98" text-anchor="middle" class="fade" style="animation-delay:0.46s">Jun 16, 2026 - Aug 23, 2026</text>
+  <rect x="0.5" y="0.5" width="879" height="167" rx="20" fill="#ffffff" stroke="#000000" stroke-opacity="0.1"/>
+  <text x="24" y="40" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="14" font-weight="600" fill="#1d1d1f" letter-spacing="-0.2" class="fade">Contribution Streak</text>
+  <line x1="293.3333333333333" y1="68" x2="293.3333333333333" y2="146" stroke="#000000" stroke-opacity="0.06"/>
+  <line x1="586.6666666666666" y1="68" x2="586.6666666666666" y2="146" stroke="#000000" stroke-opacity="0.06"/>
+  <text x="146.67" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="30" font-weight="700" fill="#1d1d1f" text-anchor="middle" letter-spacing="-0.9" class="rise" style="font-variant-numeric:tabular-nums;animation-delay:0.12s">5,429</text>
+  <text x="146.67" y="130" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="600" fill="#515154" text-anchor="middle" letter-spacing="0.7" class="fade" style="animation-delay:0.18s">TOTAL CONTRIBUTIONS</text>
+  <text x="146.67" y="147" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#6e6e73" text-anchor="middle" letter-spacing="-0.06" class="fade" style="animation-delay:0.22s">Jun 24, 2013 - Present</text>
+  <text x="440" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="30" font-weight="700" fill="#1d1d1f" text-anchor="middle" letter-spacing="-0.9" class="rise" style="font-variant-numeric:tabular-nums;animation-delay:0.24s">4</text>
+  <text x="440" y="130" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="600" fill="#515154" text-anchor="middle" letter-spacing="0.7" class="fade" style="animation-delay:0.3s">CURRENT STREAK</text>
+  <text x="440" y="147" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#6e6e73" text-anchor="middle" letter-spacing="-0.06" class="fade" style="animation-delay:0.34s">Aug 26, 2026 - Aug 29, 2026</text>
+  <text x="733.33" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="30" font-weight="700" fill="#1d1d1f" text-anchor="middle" letter-spacing="-0.9" class="rise" style="font-variant-numeric:tabular-nums;animation-delay:0.36s">69</text>
+  <text x="733.33" y="130" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="600" fill="#515154" text-anchor="middle" letter-spacing="0.7" class="fade" style="animation-delay:0.42s">LONGEST STREAK</text>
+  <text x="733.33" y="147" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#6e6e73" text-anchor="middle" letter-spacing="-0.06" class="fade" style="animation-delay:0.46s">Jun 16, 2026 - Aug 23, 2026</text>
 </svg>
