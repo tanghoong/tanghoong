@@ -4,29 +4,29 @@
   <mask id="bar"><rect x="25" y="52" width="290" height="9" rx="4.5" fill="#fff"/></mask>
   <g mask="url(#bar)">
   <rect x="25" y="52" width="290" height="9" fill="#30363d"/>
-  <rect x="25" y="52" width="91.48" height="9" rx="2" fill="#3572A5"/>
-  <rect x="117.48" y="52" width="67.5" height="9" rx="2" fill="#3178c6"/>
-  <rect x="185.98" y="52" width="47.4" height="9" rx="2" fill="#4F5D95"/>
-  <rect x="234.38" y="52" width="37.19" height="9" rx="2" fill="#e34c26"/>
-  <rect x="272.57" y="52" width="13.24" height="9" rx="2" fill="#f1e05a"/>
-  <rect x="286.81" y="52" width="7.38" height="9" rx="2" fill="#663399"/>
+  <rect x="25" y="52" width="101.08" height="9" rx="2" fill="#3178c6"/>
+  <rect x="127.08" y="52" width="68.72" height="9" rx="2" fill="#f1e05a"/>
+  <rect x="196.8" y="52" width="54.39" height="9" rx="2" fill="#e34c26"/>
+  <rect x="252.19" y="52" width="32.26" height="9" rx="2" fill="#663399"/>
+  <rect x="285.45" y="52" width="15.88" height="9" rx="2" fill="#4F5D95"/>
+  <rect x="302.33" y="52" width="4.97" height="9" rx="2" fill="#701516"/>
   </g>
-  <circle cx="30" cy="86" r="5" fill="#3572A5"/>
-  <text x="42" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#e6edf3">Python</text>
-  <text x="153" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#8b949e" text-anchor="end">31.89%</text>
-  <circle cx="178" cy="86" r="5" fill="#3178c6"/>
-  <text x="190" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#e6edf3">TypeScript</text>
-  <text x="301" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#8b949e" text-anchor="end">23.62%</text>
-  <circle cx="30" cy="112" r="5" fill="#4F5D95"/>
-  <text x="42" y="116" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#e6edf3">PHP</text>
-  <text x="153" y="116" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#8b949e" text-anchor="end">16.69%</text>
-  <circle cx="178" cy="112" r="5" fill="#e34c26"/>
-  <text x="190" y="116" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#e6edf3">HTML</text>
-  <text x="301" y="116" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#8b949e" text-anchor="end">13.17%</text>
-  <circle cx="30" cy="138" r="5" fill="#f1e05a"/>
-  <text x="42" y="142" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#e6edf3">JavaScript</text>
-  <text x="153" y="142" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#8b949e" text-anchor="end">4.91%</text>
-  <circle cx="178" cy="138" r="5" fill="#663399"/>
-  <text x="190" y="142" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#e6edf3">CSS</text>
-  <text x="301" y="142" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#8b949e" text-anchor="end">2.89%</text>
+  <circle cx="30" cy="86" r="5" fill="#3178c6"/>
+  <text x="42" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#e6edf3">TypeScript</text>
+  <text x="153" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#8b949e" text-anchor="end">35.2%</text>
+  <circle cx="178" cy="86" r="5" fill="#f1e05a"/>
+  <text x="190" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#e6edf3">JavaScript</text>
+  <text x="301" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#8b949e" text-anchor="end">24.04%</text>
+  <circle cx="30" cy="112" r="5" fill="#e34c26"/>
+  <text x="42" y="116" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#e6edf3">HTML</text>
+  <text x="153" y="116" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#8b949e" text-anchor="end">19.1%</text>
+  <circle cx="178" cy="112" r="5" fill="#663399"/>
+  <text x="190" y="116" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#e6edf3">CSS</text>
+  <text x="301" y="116" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#8b949e" text-anchor="end">11.47%</text>
+  <circle cx="30" cy="138" r="5" fill="#4F5D95"/>
+  <text x="42" y="142" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#e6edf3">PHP</text>
+  <text x="153" y="142" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#8b949e" text-anchor="end">5.82%</text>
+  <circle cx="178" cy="138" r="5" fill="#701516"/>
+  <text x="190" y="142" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#e6edf3">Ruby</text>
+  <text x="301" y="142" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#8b949e" text-anchor="end">2.06%</text>
 </svg>
