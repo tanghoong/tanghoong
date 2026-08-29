@@ -166,9 +166,11 @@ const MOTION = `
       .rise { animation: rise 420ms ${EASE} both; }
       .grow { animation: grow 420ms ${EASE} both; }
       .draw { animation: draw 900ms ${EASE} both; }
+      .bar { animation: bar 420ms ${EASE} both; }
       @keyframes fade { from { opacity: 0; transform: translateY(6px); } }
       @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
       @keyframes grow { from { transform: scaleX(0); } }
+      @keyframes bar { from { transform: scaleY(0); } }
       @keyframes draw { from { stroke-dashoffset: 1; } }`;
 
 /**
@@ -806,6 +808,123 @@ function activityCard(data, t) {
   });
 }
 
+/**
+ * Two views the other cards cannot show, sharing one card so the profile
+ * stays at five: the year-over-year curve (everything else stops at 53 weeks)
+ * and the weekday rhythm. Both are derived from `days`, which is already in
+ * memory, so neither costs an API call.
+ */
+function rhythmCard(data, t) {
+  const H = 216;
+  const mid = D.w / 2;
+  const L = D.pad;
+  const R = mid + D.pad;
+  const panelW = mid - D.pad * 2;
+  const top = 88;
+  const baseline = H - 44;
+  const plotH = baseline - top;
+
+  const byYear = new Map();
+  const byWeekday = [0, 0, 0, 0, 0, 0, 0];
+  for (const [date, count] of data.days) {
+    const year = Number(date.slice(0, 4));
+    byYear.set(year, (byYear.get(year) || 0) + count);
+    byWeekday[new Date(`${date}T00:00:00Z`).getUTCDay()] += count;
+  }
+
+  // Start at the first year that actually has contributions -- an account
+  // created in December can carry a dead first year.
+  const years = [...byYear.keys()].sort((a, b) => a - b).filter((y) => byYear.get(y) > 0);
+  const firstYear = years[0];
+  const span = [];
+  for (let y = firstYear; y <= years.at(-1); y++) span.push([y, byYear.get(y) || 0]);
+
+  /** Shade tracks value, so a bar's colour and height say the same thing. */
+  const barFill = (v, mx) => t.shadeAt(0.35 + 0.65 * (v / mx));
+
+  const bars = (items, x0, label, valueLabel) => {
+    const mx = Math.max(1, ...items.map((i) => i[1]));
+    const slot = panelW / items.length;
+    const bw = Math.min(slot * 0.62, 40);
+    return items.flatMap(([key, v], i) => {
+      const cx = x0 + slot * i + slot / 2;
+      const h = (v / mx) * plotH;
+      const y = baseline - h;
+      const delay = 0.12 + i * 0.04;
+      const out = [
+        `  <rect x="${round(cx - bw / 2)}" y="${round(y)}" width="${round(bw)}"` +
+          // A year with contributions always gets a visible stub, so the quiet
+          // decade before the ramp reads as small rather than as missing. A
+          // year with none stays empty, which is the honest shape.
+          ` height="${round(Math.max(h, v > 0 ? 3 : 0))}" rx="2" fill="${barFill(v, mx)}"` +
+          anim('bar', delay, `transform-origin:${round(cx)}px ${baseline}px`) +
+          '/>',
+        text(cx, baseline + 16, label(key), {
+          size: 9,
+          fill: t.faint,
+          anchor: 'middle',
+          cls: 'fade',
+          delay: delay + 0.04,
+        }),
+      ];
+      // Only label bars with room for it, which is what makes the recent
+      // years read as the point of the chart.
+      if (valueLabel(v, mx)) {
+        out.push(
+          text(cx, round(y) - 6, num(v), {
+            size: 9,
+            weight: 600,
+            fill: t.muted,
+            anchor: 'middle',
+            cls: 'fade',
+            delay: delay + 0.06,
+          })
+        );
+      }
+      return out;
+    });
+  };
+
+  const totalAll = [...byWeekday].reduce((a, b) => a + b, 0) || 1;
+  const weekend = byWeekday[0] + byWeekday[6];
+  const peakDay = byWeekday.indexOf(Math.max(...byWeekday));
+  const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const body = [
+    `  <line x1="${mid}" y1="${D.head - 34}" x2="${mid}" y2="${H - 24}" stroke="${t.hairline}" stroke-opacity="${t.softOpacity}"/>`,
+    `  <line x1="${L}" y1="${baseline}" x2="${L + panelW}" y2="${baseline}" stroke="${t.hairline}" stroke-opacity="${t.softOpacity}"/>`,
+    `  <line x1="${R}" y1="${baseline}" x2="${R + panelW}" y2="${baseline}" stroke="${t.hairline}" stroke-opacity="${t.softOpacity}"/>`,
+    ...bars(
+      span,
+      L,
+      (y) => `'${String(y).slice(2)}`,
+      (v, mx) => v / mx > 0.18
+    ),
+    ...bars(
+      byWeekday.map((v, i) => [i, v]),
+      R,
+      (i) => DOW[i],
+      () => true
+    ),
+  ].join('\n');
+
+  return card(H, t, {
+    panels: [
+      {
+        x: L,
+        title: 'Contribution Growth',
+        subtitle: `${firstYear} - ${years.at(-1)} · ${comma(data.totals.contributions)} total`,
+      },
+      {
+        x: R,
+        title: 'Weekly Rhythm',
+        subtitle: `${DOW[peakDay]} is the busiest day · ${Math.round((weekend / totalAll) * 100)}% on weekends`,
+      },
+    ],
+    body,
+  });
+}
+
 /* ------------------------------------------------- 3D contribution calendar */
 
 /**
@@ -1007,6 +1126,7 @@ const cards = {
   overview: overviewCard,
   streak: streakCard,
   activity: activityCard,
+  rhythm: rhythmCard,
   calendar: calendarCard,
 };
 

@@ -21,6 +21,11 @@
 </picture>
 
 <picture>
+  <source srcset="./assets/rhythm-dark.svg" media="(prefers-color-scheme: dark)" />
+  <img alt="Contribution growth by year and weekly rhythm" width="100%" src="./assets/rhythm-light.svg" />
+</picture>
+
+<picture>
   <source srcset="./assets/calendar-dark.svg" media="(prefers-color-scheme: dark)" />
   <img alt="3D contribution calendar" width="100%" src="./assets/calendar-light.svg" />
 </picture>
