@@ -8,9 +8,10 @@
  *
  * Env:
  *   USERNAME          GitHub login to render (default: tanghoong)
- *   CARD_TITLE        Heading on the stats card
+ *   CARD_TITLE        Heading on the overview card
  *   ACTIVITY_DAYS     Days in the activity chart (default: 30)
- *   CALENDAR_PALETTE  "github" (default) or "rainbow" for the 3D calendar
+ *   ACCENT            "green" (default) or "blue" -- drives every data mark
+ *   ANIMATE           "1" (default) or "0" to emit static cards
  */
 
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -24,7 +25,8 @@ const TOKEN = process.env.GITHUB_TOKEN;
 const USERNAME = process.env.USERNAME || 'tanghoong';
 const TITLE = process.env.CARD_TITLE || `${USERNAME}'s Performance`;
 const ACTIVITY_DAYS = Number(process.env.ACTIVITY_DAYS || 30);
-const CALENDAR_PALETTE = process.env.CALENDAR_PALETTE || 'github';
+const ACCENT = process.env.ACCENT === 'blue' ? 'blue' : 'green';
+const ANIMATE = process.env.ANIMATE !== '0';
 
 if (!TOKEN) {
   console.error('GITHUB_TOKEN is required');
@@ -34,52 +36,64 @@ if (!TOKEN) {
 /* ---------------------------------------------------------- design tokens */
 
 /**
- * One shared geometry + type scale for every card, so the set reads as a
- * single system rather than four unrelated boxes.
+ * One shared geometry and type scale for every card, so the set reads as a
+ * single system rather than a pile of unrelated boxes. Every card is
+ * full-bleed at the same width, which is what keeps their corners aligned
+ * once GitHub scales them to the README column.
  */
 const D = {
-  half: 430, // side-by-side cards
-  full: 880, // full-bleed cards
-  pad: 22, // inner padding
-  radius: 6, // matches GitHub's own card radius
+  w: 880, // every card is this wide, so every edge lines up
+  pad: 22,
+  radius: 6,
   head: 62, // baseline where card content starts
   type: { title: 14, label: 12, value: 12, caption: 10, big: 26, huge: 30 },
+};
+
+/**
+ * A single accent ramp drives every data mark on every card -- the ring, the
+ * activity area and the calendar all share it, so the set reads as one theme
+ * instead of three. Language colours are the exception: those are GitHub's
+ * own per-language identities and carry meaning.
+ */
+const RAMPS = {
+  green: {
+    light: ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
+    dark: ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'],
+  },
+  blue: {
+    light: ['#ebedf0', '#c6e0ff', '#79b8ff', '#2b7de9', '#0a4f9e'],
+    dark: ['#161b22', '#0d2d4f', '#12508c', '#1f6feb', '#58a6ff'],
+  },
 };
 
 // Primer colour tokens. Borders use the *muted* value so the cards sit
 // quietly on the profile page instead of framing themselves.
 const THEMES = {
   light: {
+    levels: RAMPS[ACCENT].light,
+    accent: ACCENT === 'blue' ? '#0969da' : '#2da44e',
     title: '#1f2328',
     text: '#1f2328',
     muted: '#59636e',
     faint: '#818b98',
     border: '#d8dee4',
     divider: '#e4e8ec',
-    accent: '#0969da',
     track: '#e4e8ec',
-    area: '#0969da',
     areaOpacity: 0.16,
-    highlight: '#bc4c00',
-    levels: ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
-    faceTop: 1,
     faceLeft: 0.7,
     faceRight: 0.85,
   },
   dark: {
+    levels: RAMPS[ACCENT].dark,
+    accent: ACCENT === 'blue' ? '#2f81f7' : '#39d353',
     title: '#e6edf3',
     text: '#e6edf3',
     muted: '#8b949e',
     faint: '#6e7681',
     border: '#30363d',
     divider: '#21262d',
-    accent: '#2f81f7',
     track: '#21262d',
-    area: '#2f81f7',
     areaOpacity: 0.22,
-    highlight: '#e3742a',
-    levels: ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'],
-    faceTop: 1,
     faceLeft: 0.62,
     faceRight: 0.8,
   },
@@ -87,6 +101,33 @@ const THEMES = {
 
 const FONT =
   "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif";
+
+/**
+ * Shared motion language: everything uses the same easing and the same small
+ * set of entrances, staggered rather than simultaneous. Keyframes declare
+ * only `from`, so the element's own attributes are the resting state -- which
+ * is what lets prefers-reduced-motion simply switch the animations off and
+ * still render a correct, complete card.
+ */
+const EASE = 'cubic-bezier(.22,.61,.36,1)';
+const MOTION = `
+    .fade { animation: fade .55s ${EASE} both; }
+    .rise { animation: rise .6s ${EASE} both; }
+    .grow { animation: grow .8s ${EASE} both; }
+    .draw { animation: draw 1.4s ${EASE} both; }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+    @keyframes grow { from { transform: scaleX(0); } }
+    @keyframes draw { from { stroke-dashoffset: 1; } }`;
+
+// Emitted *after* any card-specific rules. A media query adds no specificity,
+// so if this came first a later `.sweep { animation: ... }` would win and the
+// card would still animate -- and render mid-flight for anyone who asked not
+// to see motion.
+const REDUCED = `
+    @media (prefers-reduced-motion: reduce) {
+      .fade, .rise, .grow, .draw, .sweep { animation: none !important; }
+    }`;
 
 /* ------------------------------------------------------------------ utils */
 
@@ -127,7 +168,18 @@ const shade = (hex, f) => {
   return `#${ch.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 };
 
-const hsl = (h, s, l) => `hsl(${round(h)} ${s}% ${l}%)`;
+/**
+ * Animation class + delay, or nothing at all when ANIMATE is off. `extraStyle`
+ * is merged into the same style attribute -- emitting a second one would be
+ * duplicate-attribute XML and the whole card would fail to parse.
+ */
+const anim = (cls, delay = 0, extraStyle = '') => {
+  if (!ANIMATE) return extraStyle ? ` style="${extraStyle}"` : '';
+  const style = [extraStyle, delay ? `animation-delay:${round(delay)}s` : '']
+    .filter(Boolean)
+    .join(';');
+  return ` class="${cls}"${style ? ` style="${style}"` : ''}`;
+};
 
 /* ------------------------------------------------------------------- data */
 
@@ -302,57 +354,78 @@ function computeStreaks(days) {
 
 /* -------------------------------------------------------------- svg parts */
 
-const text = (x, y, str, { size = D.type.value, weight = 400, fill, anchor = 'start', opacity } = {}) =>
+const text = (
+  x,
+  y,
+  str,
+  { size = D.type.value, weight = 400, fill, anchor = 'start', spacing, cls, delay } = {}
+) =>
   `  <text x="${round(x)}" y="${round(y)}" font-family="${FONT}" font-size="${size}"` +
   ` font-weight="${weight}" fill="${fill}"` +
   (anchor === 'start' ? '' : ` text-anchor="${anchor}"`) +
-  (opacity === undefined ? '' : ` opacity="${opacity}"`) +
+  (spacing ? ` letter-spacing="${spacing}"` : '') +
+  (cls ? anim(cls, delay) : '') +
   `>${esc(str)}</text>`;
 
 /**
- * The single card primitive every asset is built from: same border, radius,
- * padding and header placement, so the cards line up as a set.
+ * The single card primitive every asset is built from: same width, border,
+ * radius, padding and header placement, so the cards stack into one column
+ * with their corners aligned.
  */
-const card = (w, h, t, { title, subtitle, body, responsive = false }) => {
+const card = (h, t, { title, subtitle, body, css = '', panels = [] }) => {
+  const W = D.w;
+  const heads = panels.length ? panels : [{ x: D.pad, title, subtitle }];
+
   const parts = [
-    `  <rect x="0.5" y="0.5" width="${w - 1}" height="${h - 1}" rx="${D.radius}"` +
+    ANIMATE ? `  <style>${MOTION}${css}${REDUCED}\n  </style>` : null,
+    `  <rect x="0.5" y="0.5" width="${W - 1}" height="${h - 1}" rx="${D.radius}"` +
       ` fill="none" stroke="${t.border}"/>`,
-    title
-      ? text(D.pad, subtitle ? 34 : 38, title, {
-          size: D.type.title,
-          weight: 600,
-          fill: t.title,
-        })
-      : null,
-    subtitle
-      ? text(D.pad, 52, subtitle, { size: D.type.caption, fill: t.muted })
-      : null,
+    ...heads.flatMap((p, i) =>
+      [
+        p.title
+          ? text(p.x, p.subtitle ? 34 : 38, p.title, {
+              size: D.type.title,
+              weight: 600,
+              fill: t.title,
+              cls: 'fade',
+              delay: 0.04 * i,
+            })
+          : null,
+        p.subtitle
+          ? text(p.x, 52, p.subtitle, {
+              size: D.type.caption,
+              fill: t.muted,
+              cls: 'fade',
+              delay: 0.04 * i + 0.06,
+            })
+          : null,
+      ].filter(Boolean)
+    ),
     body,
   ].filter(Boolean);
 
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" ${responsive ? 'width="100%"' : `width="${w}"`}` +
-    ` height="${h}" viewBox="0 0 ${w} ${h}" fill="none" role="img"` +
+    `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="${h}"` +
+    ` viewBox="0 0 ${W} ${h}" fill="none" role="img"` +
     ` preserveAspectRatio="xMidYMid meet">\n${parts.join('\n')}\n</svg>\n`
-  );
-};
-
-const ring = (cx, cy, r, fraction, t, stroke = 5) => {
-  const c = 2 * Math.PI * r;
-  return (
-    `  <circle cx="${cx}" cy="${cy}" r="${r}" stroke="${t.track}" stroke-width="${stroke}" fill="none"/>\n` +
-    `  <circle cx="${cx}" cy="${cy}" r="${r}" stroke="${t.accent}" stroke-width="${stroke}" fill="none"` +
-    ` stroke-linecap="round" stroke-dasharray="${round(c)}"` +
-    ` stroke-dashoffset="${round(c * (1 - Math.min(1, fraction)))}"` +
-    ` transform="rotate(-90 ${cx} ${cy})"/>`
   );
 };
 
 /* ------------------------------------------------------------------ cards */
 
-function statsCard(data, t) {
-  const W = D.half;
-  const H = 200;
+/**
+ * Stats and languages share one card so the top of the README is a single
+ * full-width block, flush with the cards below it.
+ */
+function overviewCard(data, t) {
+  const H = 208;
+  const mid = D.w / 2;
+  const L = D.pad; // left panel inset
+  const R = mid + D.pad; // right panel inset
+  const panelW = mid - D.pad * 2;
+
+  /* ---- left: headline numbers + active-days ring ---- */
+
   const rows = [
     ['Total Stars Earned', data.stars],
     ['Public Commits', data.totals.commits],
@@ -373,90 +446,123 @@ function statsCard(data, t) {
     1,
     Math.round((now - new Date(Date.UTC(now.getUTCFullYear(), 0, 1))) / 86400000) + 1
   );
-  const cx = W - D.pad - 52;
+  const frac = Math.min(1, activeDays / elapsed);
+  const rCirc = 36;
+  const circ = 2 * Math.PI * rCirc;
+  const cx = mid - D.pad - rCirc - 6;
 
-  const body = [
-    ...rows.map((r, i) => {
-      const y = D.head + 12 + i * 19;
-      return (
-        text(D.pad, y, r[0], { size: D.type.label, fill: t.muted }) +
-        '\n' +
-        text(W - D.pad - 122, y, num(r[1]), {
-          size: D.type.value,
-          weight: 600,
-          fill: t.text,
-          anchor: 'end',
-        })
-      );
-    }),
-    ring(cx, 118, 36, activeDays / elapsed, t, 5),
-    text(cx, 116, String(activeDays), {
+  const statRows = rows.map((r, i) => {
+    const y = D.head + 14 + i * 19;
+    return (
+      text(L, y, r[0], { size: D.type.label, fill: t.muted, cls: 'fade', delay: 0.1 + i * 0.05 }) +
+      '\n' +
+      text(cx - rCirc - 22, y, num(r[1]), {
+        size: D.type.value,
+        weight: 600,
+        fill: t.text,
+        anchor: 'end',
+        cls: 'fade',
+        delay: 0.14 + i * 0.05,
+      })
+    );
+  });
+
+  const ring = [
+    `  <circle cx="${round(cx)}" cy="122" r="${rCirc}" stroke="${t.track}" stroke-width="5" fill="none"/>`,
+    `  <circle cx="${round(cx)}" cy="122" r="${rCirc}" stroke="${t.accent}" stroke-width="5"` +
+      ` fill="none" stroke-linecap="round" stroke-dasharray="${round(circ)}"` +
+      ` stroke-dashoffset="${round(circ * (1 - frac))}"` +
+      ` transform="rotate(-90 ${round(cx)} 122)"${anim('sweep')}/>`,
+    text(cx, 120, String(activeDays), {
       size: D.type.big,
       weight: 700,
       fill: t.text,
       anchor: 'middle',
+      cls: 'fade',
+      delay: 0.3,
     }),
-    text(cx, 132, 'active days', { size: 9, fill: t.muted, anchor: 'middle' }),
-    text(cx, 174, `${Math.round((activeDays / elapsed) * 100)}% of ${currentYear}`, {
+    text(cx, 136, 'active days', {
+      size: 9,
+      fill: t.muted,
+      anchor: 'middle',
+      cls: 'fade',
+      delay: 0.34,
+    }),
+    text(cx, 180, `${Math.round(frac * 100)}% of ${currentYear}`, {
       size: D.type.caption,
       fill: t.faint,
       anchor: 'middle',
+      cls: 'fade',
+      delay: 0.38,
     }),
   ].join('\n');
 
-  return card(W, H, t, { title: TITLE, body });
-}
+  /* ---- right: language bar + legend ---- */
 
-function langsCard(data, t) {
-  const W = D.half;
-  const H = 200;
-  const barW = W - D.pad * 2;
-  const barY = D.head + 6;
-  const colW = barW / 2;
+  const barY = D.head + 8;
+  const colW = panelW / 2;
 
   let offset = 0;
   const segments = data.languages.map((l) => {
-    const w = (l.percent / 100) * barW;
+    const w = (l.percent / 100) * panelW;
     const seg =
-      `  <rect x="${round(D.pad + offset)}" y="${barY}"` +
+      `  <rect x="${round(R + offset)}" y="${barY}"` +
       ` width="${round(Math.max(w - 1, 0.5))}" height="8" fill="${l.color}"/>`;
     offset += w;
     return seg;
   });
 
   const legend = data.languages.map((l, i) => {
-    const x = D.pad + (i % 2) * colW;
-    const y = barY + 40 + Math.floor(i / 2) * 26;
+    const x = R + (i % 2) * colW;
+    const y = barY + 42 + Math.floor(i / 2) * 27;
+    const d = 0.34 + i * 0.05;
     return [
-      `  <circle cx="${round(x + 5)}" cy="${round(y - 4)}" r="5" fill="${l.color}"/>`,
-      text(x + 17, y, l.name, { size: D.type.label, weight: 500, fill: t.text }),
+      `  <circle cx="${round(x + 5)}" cy="${round(y - 4)}" r="5" fill="${l.color}"${anim('fade', d)}/>`,
+      text(x + 17, y, l.name, {
+        size: D.type.label,
+        weight: 500,
+        fill: t.text,
+        cls: 'fade',
+        delay: d,
+      }),
       // Right-aligned to a fixed column so proportional glyph widths cannot
       // push the percentage into the language name.
-      text(x + colW - 14, y, `${l.percent}%`, {
+      text(x + colW - 16, y, `${l.percent}%`, {
         size: D.type.caption,
         fill: t.muted,
         anchor: 'end',
+        cls: 'fade',
+        delay: d + 0.03,
       }),
     ].join('\n');
   });
 
   const body = [
-    `  <mask id="bar"><rect x="${D.pad}" y="${barY}" width="${barW}" height="8" rx="4" fill="#fff"/></mask>`,
-    '  <g mask="url(#bar)">',
-    `  <rect x="${D.pad}" y="${barY}" width="${barW}" height="8" fill="${t.track}"/>`,
+    `  <line x1="${mid}" y1="${D.head - 34}" x2="${mid}" y2="${H - 24}" stroke="${t.divider}"/>`,
+    ...statRows,
+    ring,
+    `  <mask id="bar"><rect x="${R}" y="${barY}" width="${panelW}" height="8" rx="4" fill="#fff"/></mask>`,
+    `  <g mask="url(#bar)"${anim('grow', 0.15, `transform-origin:${R}px ${barY + 4}px`)}>`,
+    `  <rect x="${R}" y="${barY}" width="${panelW}" height="8" fill="${t.track}"/>`,
     ...segments,
     '  </g>',
     ...legend,
   ].join('\n');
 
-  return card(W, H, t, { title: 'Most Used Languages', body });
+  return card(H, t, {
+    css: `\n    .sweep { animation: sweep 1.1s ${EASE} .2s both; }\n    @keyframes sweep { from { stroke-dashoffset: ${round(circ)}; } }`,
+    panels: [
+      { x: L, title: TITLE },
+      { x: R, title: 'Most Used Languages' },
+    ],
+    body,
+  });
 }
 
 function streakCard(data, t) {
-  const W = D.full;
   const H = 168;
   const { current, longest } = data.streaks;
-  const col = W / 3;
+  const col = D.w / 3;
 
   const range = (s) =>
     s.length === 0
@@ -467,20 +573,32 @@ function streakCard(data, t) {
 
   const panel = (index, value, label, sub) => {
     const cx = col * index + col / 2;
+    const d = 0.12 + index * 0.12;
     return [
       text(cx, 108, comma(value), {
         size: D.type.huge,
         weight: 700,
         fill: t.text,
         anchor: 'middle',
+        cls: 'rise',
+        delay: d,
       }),
       text(cx, 130, label, {
-        size: 11,
+        size: 10,
         weight: 600,
-        fill: t.highlight,
+        fill: t.muted,
         anchor: 'middle',
+        spacing: 0.8,
+        cls: 'fade',
+        delay: d + 0.06,
       }),
-      text(cx, 147, sub, { size: D.type.caption, fill: t.muted, anchor: 'middle' }),
+      text(cx, 147, sub, {
+        size: D.type.caption,
+        fill: t.faint,
+        anchor: 'middle',
+        cls: 'fade',
+        delay: d + 0.1,
+      }),
     ].join('\n');
   };
 
@@ -492,14 +610,13 @@ function streakCard(data, t) {
     panel(2, longest.length, 'LONGEST STREAK', range(longest)),
   ].join('\n');
 
-  return card(W, H, t, { title: 'Contribution Streak', body, responsive: true });
+  return card(H, t, { title: 'Contribution Streak', body });
 }
 
 function activityCard(data, t) {
-  const W = D.full;
   const H = 240;
   const plot = { top: 84, right: D.pad + 8, bottom: 40, left: D.pad + 22 };
-  const plotW = W - plot.left - plot.right;
+  const plotW = D.w - plot.left - plot.right;
   const plotH = H - plot.top - plot.bottom;
 
   const today = new Date();
@@ -559,37 +676,42 @@ function activityCard(data, t) {
         size: 9,
         fill: t.faint,
         anchor: 'middle',
+        cls: 'fade',
+        delay: 0.9 + (i / last) * 0.3,
       })
     );
 
+  // Dots pop in behind the advancing line head, so the chart reads left to
+  // right as one gesture.
   const dots = points
     .map(([px, py], i) =>
       series[i].count === 0
         ? null
-        : `  <circle cx="${round(px)}" cy="${round(py)}" r="2.5" fill="${t.area}"/>`
+        : `  <circle cx="${round(px)}" cy="${round(py)}" r="2.5" fill="${t.accent}"` +
+          `${anim('fade', 0.25 + (i / last) * 1.15)}/>`
     )
     .filter(Boolean);
 
   const total = series.reduce((a, p) => a + p.count, 0);
 
   const body = [
-    '  <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">',
-    `    <stop offset="0%" stop-color="${t.area}" stop-opacity="${round(t.areaOpacity * 2.5)}"/>`,
-    `    <stop offset="100%" stop-color="${t.area}" stop-opacity="0"/>`,
+    '  <linearGradient id="fade-grad" x1="0" y1="0" x2="0" y2="1">',
+    `    <stop offset="0%" stop-color="${t.accent}" stop-opacity="${round(t.areaOpacity * 2.5)}"/>`,
+    `    <stop offset="100%" stop-color="${t.accent}" stop-opacity="0"/>`,
     '  </linearGradient>',
     ...gridLines,
-    `  <path d="${area}" fill="url(#fade)"/>`,
-    `  <path d="${line}" fill="none" stroke="${t.area}" stroke-width="2"` +
-      ' stroke-linecap="round" stroke-linejoin="round"/>',
+    `  <path d="${area}" fill="url(#fade-grad)"${anim('fade', 0.75)}/>`,
+    `  <path d="${line}" fill="none" stroke="${t.accent}" stroke-width="2"` +
+      ` stroke-linecap="round" stroke-linejoin="round"` +
+      ` pathLength="1" stroke-dasharray="1" stroke-dashoffset="0"${anim('draw', 0.2)}/>`,
     ...dots,
     ...xLabels,
   ].join('\n');
 
-  return card(W, H, t, {
+  return card(H, t, {
     title: 'Contribution Activity',
     subtitle: `Last ${ACTIVITY_DAYS} days · ${comma(total)} contributions · peak ${max} in a day`,
     body,
-    responsive: true,
   });
 }
 
@@ -597,11 +719,10 @@ function activityCard(data, t) {
 
 /**
  * Isometric replacement for github-profile-3d-contrib. Each day is an
- * extruded box on a 53x7 grid, projected with a standard 2:1 isometric
+ * extruded box on a 53x7 grid, projected with a flattened isometric
  * transform and painted back-to-front.
  */
 function calendarCard(data, t) {
-  const W = D.full;
   const HW = 13; // half width of a tile diamond
   const HH = 4.5; // half height; flatter than a true 2:1 isometric so the
   //                 53-week band does not run away down the card
@@ -625,81 +746,94 @@ function calendarCard(data, t) {
       const count = data.days.get(iso(date)) || 0;
       max = Math.max(max, count);
       total += count;
-      cells.push({ w, d, count, date: iso(date) });
+      cells.push({ w, d, count });
     }
   }
 
   const level = (c) => (c === 0 ? 0 : Math.min(4, Math.ceil((c / max) * 4)));
-
-  const colorFor = (cell) =>
-    CALENDAR_PALETTE === 'rainbow' && cell.count > 0
-      ? hsl((cell.w / WEEKS) * 330, 72, 58)
-      : t.levels[level(cell.count)];
-
   // A gentle power curve keeps single-contribution days visible next to a
-  // 121-contribution spike.
+  // three-figure spike.
   const heightFor = (c) => (c === 0 ? 0 : 3 + Math.pow(c / max, 0.6) * MAX_H);
 
-  const px = (w, d) => (w - d) * HW;
-  const py = (w, d) => (w + d) * HH;
-
   // Painter's algorithm: in this projection a larger (w + d) sits nearer the
-  // viewer, so drawing in ascending order layers the boxes correctly.
-  const ordered = [...cells].sort((a, b) => a.w + a.d - (b.w + b.d) || a.w - b.w);
-
-  const shapes = [];
-  for (const cell of ordered) {
-    const X = px(cell.w, cell.d);
-    const Y = py(cell.w, cell.d);
-    const h = heightFor(cell.count);
-    const base = colorFor(cell);
-
-    const top = `${X},${round(Y - h)} ${round(X + HW)},${round(Y + HH - h)} ${X},${round(Y + 2 * HH - h)} ${round(X - HW)},${round(Y + HH - h)}`;
-
-    if (h > 0) {
-      shapes.push(
-        `  <polygon points="${round(X - HW)},${round(Y + HH - h)} ${X},${round(Y + 2 * HH - h)} ${X},${round(Y + 2 * HH)} ${round(X - HW)},${round(Y + HH)}" fill="${shade(base, t.faceLeft)}"/>`,
-        `  <polygon points="${X},${round(Y + 2 * HH - h)} ${round(X + HW)},${round(Y + HH - h)} ${round(X + HW)},${round(Y + HH)} ${X},${round(Y + 2 * HH)}" fill="${shade(base, t.faceRight)}"/>`
-      );
-    }
-    shapes.push(`  <polygon points="${top}" fill="${base}"/>`);
+  // viewer, so drawing diagonals in ascending order layers the boxes
+  // correctly -- and grouping by diagonal gives the entrance a single wave
+  // that sweeps the band, for 59 extra tags rather than one per day.
+  const diagonals = new Map();
+  for (const cell of cells) {
+    const key = cell.w + cell.d;
+    if (!diagonals.has(key)) diagonals.set(key, []);
+    diagonals.get(key).push(cell);
   }
 
+  const groups = [...diagonals.keys()]
+    .sort((a, b) => a - b)
+    .map((key, i) => {
+      const shapes = diagonals
+        .get(key)
+        .sort((a, b) => a.w - b.w)
+        .flatMap((cell) => {
+          const X = (cell.w - cell.d) * HW;
+          const Y = (cell.w + cell.d) * HH;
+          const h = heightFor(cell.count);
+          const base = t.levels[level(cell.count)];
+          const out = [];
+          if (h > 0) {
+            out.push(
+              `  <polygon points="${round(X - HW)},${round(Y + HH - h)} ${X},${round(Y + 2 * HH - h)} ${X},${round(Y + 2 * HH)} ${round(X - HW)},${round(Y + HH)}" fill="${shade(base, t.faceLeft)}"/>`,
+              `  <polygon points="${X},${round(Y + 2 * HH - h)} ${round(X + HW)},${round(Y + HH - h)} ${round(X + HW)},${round(Y + HH)} ${X},${round(Y + 2 * HH)}" fill="${shade(base, t.faceRight)}"/>`
+            );
+          }
+          out.push(
+            `  <polygon points="${X},${round(Y - h)} ${round(X + HW)},${round(Y + HH - h)} ${X},${round(Y + 2 * HH - h)} ${round(X - HW)},${round(Y + HH - h)}" fill="${base}"/>`
+          );
+          return out;
+        });
+      return `  <g${anim('rise', 0.15 + i * 0.016)}>\n${shapes.join('\n')}\n  </g>`;
+    });
+
   // Fit the projected grid to the card instead of hand-tuning constants.
-  const minX = -6 * HW - HW;
-  const maxX = (WEEKS - 1) * HW + HW;
+  const minX = -7 * HW;
+  const maxX = WEEKS * HW;
   const minY = -MAX_H - 3;
-  const maxY = (WEEKS - 1 + 6) * HH + 2 * HH;
-  const gridW = maxX - minX;
-  const gridH = maxY - minY;
-  const avail = W - D.pad * 2;
-  const scale = avail / gridW;
-  const H = Math.ceil(D.head + 10 + gridH * scale + D.pad + 22);
+  const maxY = (WEEKS + 5) * HH + 2 * HH;
+  const scale = (D.w - D.pad * 2) / (maxX - minX);
+  const H = Math.ceil(D.head + 10 + (maxY - minY) * scale + D.pad + 22);
 
   // Anchored to the right padding edge: Less, the swatches, then More.
-  const swatchEnd = W - D.pad - 34;
+  const swatchEnd = D.w - D.pad - 34;
   const swatchStart = swatchEnd - (t.levels.length * 15 - 4);
   const legend = t.levels
     .map(
       (c, i) =>
-        `  <rect x="${round(swatchStart + i * 15)}" y="${H - 33}" width="11" height="11" rx="2" fill="${c}"/>`
+        `  <rect x="${round(swatchStart + i * 15)}" y="${H - 33}" width="11" height="11" rx="2" fill="${c}"${anim('fade', 1.2 + i * 0.05)}/>`
     )
     .join('\n');
 
   const body = [
     `  <g transform="translate(${round(D.pad - minX * scale)} ${round(D.head + 10 - minY * scale)}) scale(${round(scale)})">`,
-    ...shapes,
+    ...groups,
     '  </g>',
-    text(swatchStart - 6, H - 24, 'Less', { size: 9, fill: t.faint, anchor: 'end' }),
+    text(swatchStart - 6, H - 24, 'Less', {
+      size: 9,
+      fill: t.faint,
+      anchor: 'end',
+      cls: 'fade',
+      delay: 1.2,
+    }),
     legend,
-    text(swatchEnd + 6, H - 24, 'More', { size: 9, fill: t.faint }),
+    text(swatchEnd + 6, H - 24, 'More', {
+      size: 9,
+      fill: t.faint,
+      cls: 'fade',
+      delay: 1.45,
+    }),
   ].join('\n');
 
-  return card(W, H, t, {
+  return card(H, t, {
     title: 'Contribution Calendar',
     subtitle: `${pretty(iso(start))} - ${pretty(iso(end))} · ${comma(total)} contributions · peak ${max} in a day`,
     body,
-    responsive: true,
   });
 }
 
@@ -709,21 +843,43 @@ const data = await fetchStats();
 await mkdir(OUT_DIR, { recursive: true });
 
 const cards = {
-  stats: statsCard,
-  langs: langsCard,
+  overview: overviewCard,
   streak: streakCard,
   activity: activityCard,
   calendar: calendarCard,
 };
 
+/**
+ * A malformed SVG renders as a broken image with no error anywhere, so every
+ * card is checked for duplicate attributes and balanced tags before it is
+ * written.
+ */
+function assertWellFormed(name, svg) {
+  const tags = svg.match(/<[a-zA-Z][^>]*>/g) || [];
+  for (const tag of tags) {
+    const seen = new Set();
+    for (const [, attr] of tag.matchAll(/([a-zA-Z-]+)\s*=\s*"/g)) {
+      if (seen.has(attr)) throw new Error(`${name}: duplicate "${attr}" attribute in ${tag}`);
+      seen.add(attr);
+    }
+  }
+  const open = (svg.match(/<(?!\/)[a-zA-Z][^>]*(?<!\/)>/g) || []).length;
+  const close = (svg.match(/<\/[a-zA-Z]/g) || []).length;
+  if (open !== close) throw new Error(`${name}: ${open} opening tags vs ${close} closing tags`);
+}
+
 for (const [name, render] of Object.entries(cards)) {
   for (const [themeName, theme] of Object.entries(THEMES)) {
-    await writeFile(join(OUT_DIR, `${name}-${themeName}.svg`), render(data, theme), 'utf8');
-    console.log(`wrote assets/${name}-${themeName}.svg`);
+    const file = `${name}-${themeName}.svg`;
+    const svg = render(data, theme);
+    assertWellFormed(file, svg);
+    await writeFile(join(OUT_DIR, file), svg, 'utf8');
+    console.log(`wrote assets/${file}`);
   }
 }
 
 console.log(
   `\n${USERNAME}: ${data.totals.contributions} contributions, ${data.stars} stars, ` +
-    `current streak ${data.streaks.current.length}, longest ${data.streaks.longest.length}`
+    `current streak ${data.streaks.current.length}, longest ${data.streaks.longest.length}` +
+    ` (accent=${ACCENT}, animate=${ANIMATE})`
 );
