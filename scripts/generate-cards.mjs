@@ -5,6 +5,12 @@
  * written to assets/ so the README only ever references files in this repo.
  *
  * Usage: GITHUB_TOKEN=... USERNAME=tanghoong node scripts/generate-cards.mjs
+ *
+ * Env:
+ *   USERNAME          GitHub login to render (default: tanghoong)
+ *   CARD_TITLE        Heading on the stats card
+ *   ACTIVITY_DAYS     Days in the activity chart (default: 30)
+ *   CALENDAR_PALETTE  "github" (default) or "rainbow" for the 3D calendar
  */
 
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -18,40 +24,64 @@ const TOKEN = process.env.GITHUB_TOKEN;
 const USERNAME = process.env.USERNAME || 'tanghoong';
 const TITLE = process.env.CARD_TITLE || `${USERNAME}'s Performance`;
 const ACTIVITY_DAYS = Number(process.env.ACTIVITY_DAYS || 30);
+const CALENDAR_PALETTE = process.env.CALENDAR_PALETTE || 'github';
 
 if (!TOKEN) {
   console.error('GITHUB_TOKEN is required');
   process.exit(1);
 }
 
-/* ------------------------------------------------------------------ theme */
+/* ---------------------------------------------------------- design tokens */
 
+/**
+ * One shared geometry + type scale for every card, so the set reads as a
+ * single system rather than four unrelated boxes.
+ */
+const D = {
+  half: 430, // side-by-side cards
+  full: 880, // full-bleed cards
+  pad: 22, // inner padding
+  radius: 6, // matches GitHub's own card radius
+  head: 62, // baseline where card content starts
+  type: { title: 14, label: 12, value: 12, caption: 10, big: 26, huge: 30 },
+};
+
+// Primer colour tokens. Borders use the *muted* value so the cards sit
+// quietly on the profile page instead of framing themselves.
 const THEMES = {
   light: {
-    title: '#0969da',
+    title: '#1f2328',
     text: '#1f2328',
     muted: '#59636e',
-    border: '#d1d9e0',
+    faint: '#818b98',
+    border: '#d8dee4',
+    divider: '#e4e8ec',
     accent: '#0969da',
-    ring: '#0969da',
-    ringTrack: '#d1d9e0',
-    grid: '#d1d9e0',
+    track: '#e4e8ec',
     area: '#0969da',
-    areaOpacity: 0.14,
-    fire: '#bc4c00',
+    areaOpacity: 0.16,
+    highlight: '#bc4c00',
+    levels: ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
+    faceTop: 1,
+    faceLeft: 0.7,
+    faceRight: 0.85,
   },
   dark: {
-    title: '#2f81f7',
+    title: '#e6edf3',
     text: '#e6edf3',
     muted: '#8b949e',
-    border: '#3d444d',
+    faint: '#6e7681',
+    border: '#30363d',
+    divider: '#21262d',
     accent: '#2f81f7',
-    ring: '#2f81f7',
-    ringTrack: '#30363d',
-    grid: '#30363d',
+    track: '#21262d',
     area: '#2f81f7',
-    areaOpacity: 0.2,
-    fire: '#e3742a',
+    areaOpacity: 0.22,
+    highlight: '#e3742a',
+    levels: ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'],
+    faceTop: 1,
+    faceLeft: 0.62,
+    faceRight: 0.8,
   },
 };
 
@@ -70,6 +100,8 @@ const num = (n) => {
   return String(n);
 };
 
+const comma = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
 const round = (n) => Math.round(n * 100) / 100;
 
 const iso = (d) => d.toISOString().slice(0, 10);
@@ -85,6 +117,17 @@ const shortDate = (isoDate) => {
   const [, m, d] = isoDate.split('-').map(Number);
   return `${MONTHS[m - 1]} ${d}`;
 };
+
+/** Multiplies a hex colour, used to shade the sides of the isometric boxes. */
+const shade = (hex, f) => {
+  const n = parseInt(hex.slice(1), 16);
+  const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) =>
+    Math.max(0, Math.min(255, Math.round(v * f)))
+  );
+  return `#${ch.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+};
+
+const hsl = (h, s, l) => `hsl(${round(h)} ${s}% ${l}%)`;
 
 /* ------------------------------------------------------------------- data */
 
@@ -124,7 +167,6 @@ const YEAR_QUERY = `
         totalPullRequestContributions
         totalIssueContributions
         totalPullRequestReviewContributions
-        totalRepositoriesWithContributedCommits
         restrictedContributionsCount
         contributionCalendar {
           totalContributions
@@ -166,7 +208,6 @@ async function fetchStats() {
   // account year by year and stitch the days back together.
   const days = new Map();
   const totals = { commits: 0, prs: 0, issues: 0, reviews: 0, private: 0, contributions: 0 };
-  let contributedTo = 0;
 
   for (let year = createdAt.getUTCFullYear(); year <= now.getUTCFullYear(); year++) {
     const from = new Date(Date.UTC(year, 0, 1));
@@ -187,7 +228,6 @@ async function fetchStats() {
     // The calendar total already folds in restrictedContributionsCount, so it
     // must not be added on top of it again.
     totals.contributions += c.contributionCalendar.totalContributions;
-    contributedTo = Math.max(contributedTo, c.totalRepositoriesWithContributedCommits);
 
     for (const week of c.contributionCalendar.weeks) {
       for (const day of week.contributionDays) {
@@ -225,7 +265,6 @@ async function fetchStats() {
   return {
     user,
     totals,
-    contributedTo,
     stars,
     languages,
     days,
@@ -263,23 +302,46 @@ function computeStreaks(days) {
 
 /* -------------------------------------------------------------- svg parts */
 
-const svg = (w, h, body, { responsive = false } = {}) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" ${responsive ? 'width="100%"' : `width="${w}"`}` +
-  ` height="${h}" viewBox="0 0 ${w} ${h}" fill="none" role="img"` +
-  ` preserveAspectRatio="xMidYMid meet">\n${body}\n</svg>\n`;
+const text = (x, y, str, { size = D.type.value, weight = 400, fill, anchor = 'start', opacity } = {}) =>
+  `  <text x="${round(x)}" y="${round(y)}" font-family="${FONT}" font-size="${size}"` +
+  ` font-weight="${weight}" fill="${fill}"` +
+  (anchor === 'start' ? '' : ` text-anchor="${anchor}"`) +
+  (opacity === undefined ? '' : ` opacity="${opacity}"`) +
+  `>${esc(str)}</text>`;
 
-const frame = (w, h, t) =>
-  `  <rect x="0.5" y="0.5" width="${w - 1}" height="${h - 1}" rx="6" fill="none" stroke="${t.border}"/>`;
+/**
+ * The single card primitive every asset is built from: same border, radius,
+ * padding and header placement, so the cards line up as a set.
+ */
+const card = (w, h, t, { title, subtitle, body, responsive = false }) => {
+  const parts = [
+    `  <rect x="0.5" y="0.5" width="${w - 1}" height="${h - 1}" rx="${D.radius}"` +
+      ` fill="none" stroke="${t.border}"/>`,
+    title
+      ? text(D.pad, subtitle ? 34 : 38, title, {
+          size: D.type.title,
+          weight: 600,
+          fill: t.title,
+        })
+      : null,
+    subtitle
+      ? text(D.pad, 52, subtitle, { size: D.type.caption, fill: t.muted })
+      : null,
+    body,
+  ].filter(Boolean);
 
-const text = (x, y, str, { size = 12, weight = 400, fill, anchor = 'start' } = {}) =>
-  `  <text x="${x}" y="${y}" font-family="${FONT}" font-size="${size}" font-weight="${weight}"` +
-  ` fill="${fill}"${anchor === 'start' ? '' : ` text-anchor="${anchor}"`}>${esc(str)}</text>`;
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" ${responsive ? 'width="100%"' : `width="${w}"`}` +
+    ` height="${h}" viewBox="0 0 ${w} ${h}" fill="none" role="img"` +
+    ` preserveAspectRatio="xMidYMid meet">\n${parts.join('\n')}\n</svg>\n`
+  );
+};
 
 const ring = (cx, cy, r, fraction, t, stroke = 5) => {
   const c = 2 * Math.PI * r;
   return (
-    `  <circle cx="${cx}" cy="${cy}" r="${r}" stroke="${t.ringTrack}" stroke-width="${stroke}" fill="none"/>\n` +
-    `  <circle cx="${cx}" cy="${cy}" r="${r}" stroke="${t.ring}" stroke-width="${stroke}" fill="none"` +
+    `  <circle cx="${cx}" cy="${cy}" r="${r}" stroke="${t.track}" stroke-width="${stroke}" fill="none"/>\n` +
+    `  <circle cx="${cx}" cy="${cy}" r="${r}" stroke="${t.accent}" stroke-width="${stroke}" fill="none"` +
     ` stroke-linecap="round" stroke-dasharray="${round(c)}"` +
     ` stroke-dashoffset="${round(c * (1 - Math.min(1, fraction)))}"` +
     ` transform="rotate(-90 ${cx} ${cy})"/>`
@@ -289,7 +351,7 @@ const ring = (cx, cy, r, fraction, t, stroke = 5) => {
 /* ------------------------------------------------------------------ cards */
 
 function statsCard(data, t) {
-  const W = 460;
+  const W = D.half;
   const H = 200;
   const rows = [
     ['Total Stars Earned', data.stars],
@@ -311,77 +373,88 @@ function statsCard(data, t) {
     1,
     Math.round((now - new Date(Date.UTC(now.getUTCFullYear(), 0, 1))) / 86400000) + 1
   );
+  const cx = W - D.pad - 52;
 
   const body = [
-    frame(W, H, t),
-    text(25, 33, TITLE, { size: 16, weight: 600, fill: t.title }),
     ...rows.map((r, i) => {
-      const y = 66 + i * 21;
+      const y = D.head + 12 + i * 19;
       return (
-        text(25, y, r[0], { size: 12, fill: t.muted }) +
+        text(D.pad, y, r[0], { size: D.type.label, fill: t.muted }) +
         '\n' +
-        text(300, y, num(r[1]), { size: 12, weight: 600, fill: t.text, anchor: 'end' })
+        text(W - D.pad - 122, y, num(r[1]), {
+          size: D.type.value,
+          weight: 600,
+          fill: t.text,
+          anchor: 'end',
+        })
       );
     }),
-    ring(378, 108, 38, activeDays / elapsed, t, 6),
-    text(378, 106, String(activeDays), { size: 22, weight: 700, fill: t.text, anchor: 'middle' }),
-    text(378, 122, 'active days', { size: 9, fill: t.muted, anchor: 'middle' }),
-    text(378, 168, `${Math.round((activeDays / elapsed) * 100)}% of ${currentYear}`, {
-      size: 10,
-      fill: t.muted,
+    ring(cx, 118, 36, activeDays / elapsed, t, 5),
+    text(cx, 116, String(activeDays), {
+      size: D.type.big,
+      weight: 700,
+      fill: t.text,
+      anchor: 'middle',
+    }),
+    text(cx, 132, 'active days', { size: 9, fill: t.muted, anchor: 'middle' }),
+    text(cx, 174, `${Math.round((activeDays / elapsed) * 100)}% of ${currentYear}`, {
+      size: D.type.caption,
+      fill: t.faint,
       anchor: 'middle',
     }),
   ].join('\n');
 
-  return svg(W, H, body);
+  return card(W, H, t, { title: TITLE, body });
 }
 
 function langsCard(data, t) {
-  const W = 340;
+  const W = D.half;
   const H = 200;
-  const barX = 25;
-  const barW = W - 50;
-  const barY = 52;
+  const barW = W - D.pad * 2;
+  const barY = D.head + 6;
+  const colW = barW / 2;
 
   let offset = 0;
   const segments = data.languages.map((l) => {
     const w = (l.percent / 100) * barW;
     const seg =
-      `  <rect x="${round(barX + offset)}" y="${barY}"` +
-      ` width="${round(Math.max(w - 1, 0.5))}" height="9" rx="2" fill="${l.color}"/>`;
+      `  <rect x="${round(D.pad + offset)}" y="${barY}"` +
+      ` width="${round(Math.max(w - 1, 0.5))}" height="8" fill="${l.color}"/>`;
     offset += w;
     return seg;
   });
 
   const legend = data.languages.map((l, i) => {
-    const x = barX + (i % 2) * 148;
-    const y = 90 + Math.floor(i / 2) * 26;
+    const x = D.pad + (i % 2) * colW;
+    const y = barY + 40 + Math.floor(i / 2) * 26;
     return [
-      `  <circle cx="${x + 5}" cy="${y - 4}" r="5" fill="${l.color}"/>`,
-      text(x + 17, y, l.name, { size: 12, weight: 600, fill: t.text }),
+      `  <circle cx="${round(x + 5)}" cy="${round(y - 4)}" r="5" fill="${l.color}"/>`,
+      text(x + 17, y, l.name, { size: D.type.label, weight: 500, fill: t.text }),
       // Right-aligned to a fixed column so proportional glyph widths cannot
       // push the percentage into the language name.
-      text(x + 128, y, `${l.percent}%`, { size: 11, fill: t.muted, anchor: 'end' }),
+      text(x + colW - 14, y, `${l.percent}%`, {
+        size: D.type.caption,
+        fill: t.muted,
+        anchor: 'end',
+      }),
     ].join('\n');
   });
 
   const body = [
-    frame(W, H, t),
-    text(25, 33, 'Most Used Languages', { size: 16, weight: 600, fill: t.title }),
-    `  <mask id="bar"><rect x="${barX}" y="${barY}" width="${barW}" height="9" rx="4.5" fill="#fff"/></mask>`,
+    `  <mask id="bar"><rect x="${D.pad}" y="${barY}" width="${barW}" height="8" rx="4" fill="#fff"/></mask>`,
     '  <g mask="url(#bar)">',
-    `  <rect x="${barX}" y="${barY}" width="${barW}" height="9" fill="${t.ringTrack}"/>`,
+    `  <rect x="${D.pad}" y="${barY}" width="${barW}" height="8" fill="${t.track}"/>`,
     ...segments,
     '  </g>',
     ...legend,
   ].join('\n');
 
-  return svg(W, H, body);
+  return card(W, H, t, { title: 'Most Used Languages', body });
 }
 
 function streakCard(data, t) {
-  const W = 800;
-  const H = 180;
+  const W = D.full;
+  const H = 168;
   const { current, longest } = data.streaks;
   const col = W / 3;
 
@@ -392,41 +465,42 @@ function streakCard(data, t) {
         ? pretty(s.start)
         : `${pretty(s.start)} - ${pretty(s.end)}`;
 
-  const panel = (index, value, label, sub, { highlight = false } = {}) => {
+  const panel = (index, value, label, sub) => {
     const cx = col * index + col / 2;
     return [
-      highlight ? ring(cx, 76, 40, 1, t, 5) : null,
-      text(cx, 86, num(value), { size: 30, weight: 700, fill: t.text, anchor: 'middle' }),
-      text(cx, highlight ? 138 : 116, label, {
-        size: 13,
-        weight: 600,
-        fill: t.fire,
+      text(cx, 108, comma(value), {
+        size: D.type.huge,
+        weight: 700,
+        fill: t.text,
         anchor: 'middle',
       }),
-      text(cx, highlight ? 156 : 136, sub, { size: 11, fill: t.muted, anchor: 'middle' }),
-    ]
-      .filter(Boolean)
-      .join('\n');
+      text(cx, 130, label, {
+        size: 11,
+        weight: 600,
+        fill: t.highlight,
+        anchor: 'middle',
+      }),
+      text(cx, 147, sub, { size: D.type.caption, fill: t.muted, anchor: 'middle' }),
+    ].join('\n');
   };
 
   const body = [
-    frame(W, H, t),
-    `  <line x1="${col}" y1="30" x2="${col}" y2="${H - 30}" stroke="${t.border}"/>`,
-    `  <line x1="${col * 2}" y1="30" x2="${col * 2}" y2="${H - 30}" stroke="${t.border}"/>`,
-    panel(0, data.totals.contributions, 'Total Contributions', `${pretty(data.since)} - Present`),
-    panel(1, current.length, 'Current Streak', range(current), { highlight: true }),
-    panel(2, longest.length, 'Longest Streak', range(longest)),
+    `  <line x1="${col}" y1="${D.head + 4}" x2="${col}" y2="${H - 22}" stroke="${t.divider}"/>`,
+    `  <line x1="${col * 2}" y1="${D.head + 4}" x2="${col * 2}" y2="${H - 22}" stroke="${t.divider}"/>`,
+    panel(0, data.totals.contributions, 'TOTAL CONTRIBUTIONS', `${pretty(data.since)} - Present`),
+    panel(1, current.length, 'CURRENT STREAK', range(current)),
+    panel(2, longest.length, 'LONGEST STREAK', range(longest)),
   ].join('\n');
 
-  return svg(W, H, body, { responsive: true });
+  return card(W, H, t, { title: 'Contribution Streak', body, responsive: true });
 }
 
 function activityCard(data, t) {
-  const W = 880;
-  const H = 280;
-  const pad = { top: 78, right: 40, bottom: 46, left: 52 };
-  const plotW = W - pad.left - pad.right;
-  const plotH = H - pad.top - pad.bottom;
+  const W = D.full;
+  const H = 240;
+  const plot = { top: 84, right: D.pad + 8, bottom: 40, left: D.pad + 22 };
+  const plotW = W - plot.left - plot.right;
+  const plotH = H - plot.top - plot.bottom;
 
   const today = new Date();
   const series = [];
@@ -438,13 +512,13 @@ function activityCard(data, t) {
   }
 
   const max = Math.max(1, ...series.map((p) => p.count));
-  const x = (i) => pad.left + (i / (series.length - 1)) * plotW;
-  const y = (v) => pad.top + plotH - (v / max) * plotH;
+  const x = (i) => plot.left + (i / (series.length - 1)) * plotW;
+  const y = (v) => plot.top + plotH - (v / max) * plotH;
   const points = series.map((p, i) => [x(i), y(p.count)]);
-  const baseline = pad.top + plotH;
+  const baseline = plot.top + plotH;
 
   // Catmull-Rom to cubic bezier, clamped so the curve never leaves the plot.
-  const clamp = (v) => Math.min(baseline, Math.max(pad.top, v));
+  const clamp = (v) => Math.min(baseline, Math.max(plot.top, v));
   let line = `M ${round(points[0][0])} ${round(points[0][1])}`;
   for (let i = 0; i < points.length - 1; i++) {
     const p0 = points[i - 1] || points[i];
@@ -460,30 +534,30 @@ function activityCard(data, t) {
   const area = `${line} L ${round(points.at(-1)[0])} ${baseline} L ${round(points[0][0])} ${baseline} Z`;
 
   const gridLines = [0, 0.5, 1].map((f) => {
-    const gy = round(pad.top + plotH * f);
+    const gy = round(plot.top + plotH * f);
     return (
-      `  <line x1="${pad.left}" y1="${gy}" x2="${pad.left + plotW}" y2="${gy}"` +
-      ` stroke="${t.grid}" stroke-dasharray="3 4"/>\n` +
-      text(pad.left - 10, gy + 4, String(Math.round(max * (1 - f))), {
-        size: 10,
-        fill: t.muted,
+      `  <line x1="${plot.left}" y1="${gy}" x2="${plot.left + plotW}" y2="${gy}"` +
+      ` stroke="${t.divider}"/>\n` +
+      text(plot.left - 10, gy + 3.5, String(Math.round(max * (1 - f))), {
+        size: 9,
+        fill: t.faint,
         anchor: 'end',
       })
     );
   });
 
-  // Always label the final day, and drop any stepped label that would sit on
-  // top of it.
+  // Always label the final day, and drop any stepped label that would collide
+  // with it.
   const step = Math.max(1, Math.round(series.length / 8));
   const last = series.length - 1;
-  const minGap = plotW / (series.length - 1) < 3 ? 3 : step * 0.6;
+  const minGap = step * 0.6;
   const xLabels = series
     .map((p, i) => (i === last || (i % step === 0 && last - i > minGap) ? { p, i } : null))
     .filter(Boolean)
     .map(({ p, i }) =>
-      text(round(x(i)), baseline + 22, shortDate(p.date), {
-        size: 10,
-        fill: t.muted,
+      text(x(i), baseline + 20, shortDate(p.date), {
+        size: 9,
+        fill: t.faint,
         anchor: 'middle',
       })
     );
@@ -499,12 +573,6 @@ function activityCard(data, t) {
   const total = series.reduce((a, p) => a + p.count, 0);
 
   const body = [
-    frame(W, H, t),
-    text(30, 38, 'Contribution Activity', { size: 16, weight: 600, fill: t.title }),
-    text(30, 58, `Last ${ACTIVITY_DAYS} days - ${total} contributions - peak ${max} in a day`, {
-      size: 11,
-      fill: t.muted,
-    }),
     '  <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">',
     `    <stop offset="0%" stop-color="${t.area}" stop-opacity="${round(t.areaOpacity * 2.5)}"/>`,
     `    <stop offset="100%" stop-color="${t.area}" stop-opacity="0"/>`,
@@ -517,7 +585,122 @@ function activityCard(data, t) {
     ...xLabels,
   ].join('\n');
 
-  return svg(W, H, body, { responsive: true });
+  return card(W, H, t, {
+    title: 'Contribution Activity',
+    subtitle: `Last ${ACTIVITY_DAYS} days · ${comma(total)} contributions · peak ${max} in a day`,
+    body,
+    responsive: true,
+  });
+}
+
+/* ------------------------------------------------- 3D contribution calendar */
+
+/**
+ * Isometric replacement for github-profile-3d-contrib. Each day is an
+ * extruded box on a 53x7 grid, projected with a standard 2:1 isometric
+ * transform and painted back-to-front.
+ */
+function calendarCard(data, t) {
+  const W = D.full;
+  const HW = 13; // half width of a tile diamond
+  const HH = 4.5; // half height; flatter than a true 2:1 isometric so the
+  //                 53-week band does not run away down the card
+  const MAX_H = 44; // tallest box, in user units
+  const WEEKS = 53;
+
+  // Rebuild GitHub's own grid: 53 columns ending on today, each starting on a
+  // Sunday.
+  const today = new Date();
+  const todayUTC = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  const end = new Date(todayUTC);
+  const start = new Date(todayUTC - ((WEEKS - 1) * 7 + end.getUTCDay()) * 86400000);
+
+  const cells = [];
+  let max = 1;
+  let total = 0;
+  for (let w = 0; w < WEEKS; w++) {
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(start.getTime() + (w * 7 + d) * 86400000);
+      if (date.getTime() > todayUTC) continue;
+      const count = data.days.get(iso(date)) || 0;
+      max = Math.max(max, count);
+      total += count;
+      cells.push({ w, d, count, date: iso(date) });
+    }
+  }
+
+  const level = (c) => (c === 0 ? 0 : Math.min(4, Math.ceil((c / max) * 4)));
+
+  const colorFor = (cell) =>
+    CALENDAR_PALETTE === 'rainbow' && cell.count > 0
+      ? hsl((cell.w / WEEKS) * 330, 72, 58)
+      : t.levels[level(cell.count)];
+
+  // A gentle power curve keeps single-contribution days visible next to a
+  // 121-contribution spike.
+  const heightFor = (c) => (c === 0 ? 0 : 3 + Math.pow(c / max, 0.6) * MAX_H);
+
+  const px = (w, d) => (w - d) * HW;
+  const py = (w, d) => (w + d) * HH;
+
+  // Painter's algorithm: in this projection a larger (w + d) sits nearer the
+  // viewer, so drawing in ascending order layers the boxes correctly.
+  const ordered = [...cells].sort((a, b) => a.w + a.d - (b.w + b.d) || a.w - b.w);
+
+  const shapes = [];
+  for (const cell of ordered) {
+    const X = px(cell.w, cell.d);
+    const Y = py(cell.w, cell.d);
+    const h = heightFor(cell.count);
+    const base = colorFor(cell);
+
+    const top = `${X},${round(Y - h)} ${round(X + HW)},${round(Y + HH - h)} ${X},${round(Y + 2 * HH - h)} ${round(X - HW)},${round(Y + HH - h)}`;
+
+    if (h > 0) {
+      shapes.push(
+        `  <polygon points="${round(X - HW)},${round(Y + HH - h)} ${X},${round(Y + 2 * HH - h)} ${X},${round(Y + 2 * HH)} ${round(X - HW)},${round(Y + HH)}" fill="${shade(base, t.faceLeft)}"/>`,
+        `  <polygon points="${X},${round(Y + 2 * HH - h)} ${round(X + HW)},${round(Y + HH - h)} ${round(X + HW)},${round(Y + HH)} ${X},${round(Y + 2 * HH)}" fill="${shade(base, t.faceRight)}"/>`
+      );
+    }
+    shapes.push(`  <polygon points="${top}" fill="${base}"/>`);
+  }
+
+  // Fit the projected grid to the card instead of hand-tuning constants.
+  const minX = -6 * HW - HW;
+  const maxX = (WEEKS - 1) * HW + HW;
+  const minY = -MAX_H - 3;
+  const maxY = (WEEKS - 1 + 6) * HH + 2 * HH;
+  const gridW = maxX - minX;
+  const gridH = maxY - minY;
+  const avail = W - D.pad * 2;
+  const scale = avail / gridW;
+  const H = Math.ceil(D.head + 10 + gridH * scale + D.pad + 22);
+
+  // Anchored to the right padding edge: Less, the swatches, then More.
+  const swatchEnd = W - D.pad - 34;
+  const swatchStart = swatchEnd - (t.levels.length * 15 - 4);
+  const legend = t.levels
+    .map(
+      (c, i) =>
+        `  <rect x="${round(swatchStart + i * 15)}" y="${H - 33}" width="11" height="11" rx="2" fill="${c}"/>`
+    )
+    .join('\n');
+
+  const body = [
+    `  <g transform="translate(${round(D.pad - minX * scale)} ${round(D.head + 10 - minY * scale)}) scale(${round(scale)})">`,
+    ...shapes,
+    '  </g>',
+    text(swatchStart - 6, H - 24, 'Less', { size: 9, fill: t.faint, anchor: 'end' }),
+    legend,
+    text(swatchEnd + 6, H - 24, 'More', { size: 9, fill: t.faint }),
+  ].join('\n');
+
+  return card(W, H, t, {
+    title: 'Contribution Calendar',
+    subtitle: `${pretty(iso(start))} - ${pretty(iso(end))} · ${comma(total)} contributions · peak ${max} in a day`,
+    body,
+    responsive: true,
+  });
 }
 
 /* ------------------------------------------------------------------- main */
@@ -530,6 +713,7 @@ const cards = {
   langs: langsCard,
   streak: streakCard,
   activity: activityCard,
+  calendar: calendarCard,
 };
 
 for (const [name, render] of Object.entries(cards)) {

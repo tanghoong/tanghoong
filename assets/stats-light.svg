@@ -1,21 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="460" height="200" viewBox="0 0 460 200" fill="none" role="img" preserveAspectRatio="xMidYMid meet">
-  <rect x="0.5" y="0.5" width="459" height="199" rx="6" fill="none" stroke="#d1d9e0"/>
-  <text x="25" y="33" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#0969da">Charlie&apos;s Performance</text>
-  <text x="25" y="66" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e">Total Stars Earned</text>
-  <text x="300" y="66" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328" text-anchor="end">6</text>
-  <text x="25" y="87" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e">Public Commits</text>
-  <text x="300" y="87" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328" text-anchor="end">349</text>
-  <text x="25" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e">Private Contributions</text>
-  <text x="300" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328" text-anchor="end">5k</text>
-  <text x="25" y="129" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e">Pull Requests</text>
-  <text x="300" y="129" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328" text-anchor="end">27</text>
-  <text x="25" y="150" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e">Issues Opened</text>
-  <text x="300" y="150" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328" text-anchor="end">10</text>
-  <text x="25" y="171" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e">Followers</text>
-  <text x="300" y="171" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328" text-anchor="end">75</text>
-  <circle cx="378" cy="108" r="38" stroke="#d1d9e0" stroke-width="6" fill="none"/>
-  <circle cx="378" cy="108" r="38" stroke="#0969da" stroke-width="6" fill="none" stroke-linecap="round" stroke-dasharray="238.76" stroke-dashoffset="58.21" transform="rotate(-90 378 108)"/>
-  <text x="378" y="106" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#1f2328" text-anchor="middle">183</text>
-  <text x="378" y="122" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="400" fill="#59636e" text-anchor="middle">active days</text>
-  <text x="378" y="168" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#59636e" text-anchor="middle">76% of 2026</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="430" height="200" viewBox="0 0 430 200" fill="none" role="img" preserveAspectRatio="xMidYMid meet">
+  <rect x="0.5" y="0.5" width="429" height="199" rx="6" fill="none" stroke="#d8dee4"/>
+  <text x="22" y="38" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1f2328">Charlie&apos;s Performance</text>
+  <text x="22" y="74" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e">Total Stars Earned</text>
+  <text x="286" y="74" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328" text-anchor="end">21</text>
+  <text x="22" y="93" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e">Public Commits</text>
+  <text x="286" y="93" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328" text-anchor="end">349</text>
+  <text x="22" y="112" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e">Private Contributions</text>
+  <text x="286" y="112" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328" text-anchor="end">5k</text>
+  <text x="22" y="131" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e">Pull Requests</text>
+  <text x="286" y="131" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328" text-anchor="end">27</text>
+  <text x="22" y="150" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e">Issues Opened</text>
+  <text x="286" y="150" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328" text-anchor="end">10</text>
+  <text x="22" y="169" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e">Followers</text>
+  <text x="286" y="169" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1f2328" text-anchor="end">75</text>
+  <circle cx="356" cy="118" r="36" stroke="#e4e8ec" stroke-width="5" fill="none"/>
+  <circle cx="356" cy="118" r="36" stroke="#0969da" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="226.19" stroke-dashoffset="56.08" transform="rotate(-90 356 118)"/>
+  <text x="356" y="116" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="26" font-weight="700" fill="#1f2328" text-anchor="middle">182</text>
+  <text x="356" y="132" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="400" fill="#59636e" text-anchor="middle">active days</text>
+  <text x="356" y="174" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#818b98" text-anchor="middle">75% of 2026</text>
 </svg>
