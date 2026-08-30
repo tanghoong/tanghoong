@@ -9,7 +9,7 @@
  * Env:
  *   USERNAME          GitHub login to render (default: tanghoong)
  *   CARD_TITLE        Heading on the overview card
- *   ACTIVITY_MONTHS   Monthly candles in the activity chart (default: 18)
+ *   ACTIVITY_WEEKS    Weekly candles in the activity chart (default: 52)
  *   GROWTH_YEARS      Years in the growth chart (default: 2 -- this and last)
  *   ACCENT            "green" (default) or "blue" -- drives every data mark
  *   ANIMATE           "1" (default) or "0" to emit static cards
@@ -27,7 +27,7 @@ const OUT_DIR = join(ROOT, 'assets');
 const TOKEN = process.env.GITHUB_TOKEN;
 const USERNAME = process.env.USERNAME || 'tanghoong';
 const TITLE = process.env.CARD_TITLE || `${USERNAME}'s Performance`;
-const ACTIVITY_MONTHS = Number(process.env.ACTIVITY_MONTHS || 18);
+const ACTIVITY_WEEKS = Number(process.env.ACTIVITY_WEEKS || 52);
 const GROWTH_YEARS = Number(process.env.GROWTH_YEARS || 2);
 const ACCENT = process.env.ACCENT === 'blue' ? 'blue' : 'green';
 const ANIMATE = process.env.ANIMATE !== '0';
@@ -989,25 +989,31 @@ function streakCard(data, t) {
 }
 
 /**
- * A candlestick chart over MONTHS, with each month's complete weeks as its
- * ticks: open is the month's first full week, close its last, and the wick
- * spans the quietest and busiest week in between.
+ * A candlestick chart over WEEKS, built the way a weekly candle is built from
+ * daily prices: the seven daily contribution counts are the ticks, open is the
+ * week's first day, close its last, and the wick spans its quietest and busiest
+ * day. Fifty-two of them, so the chart carries a year at a density where the
+ * week-to-week movement is actually visible.
  *
- * The first attempt priced this on a rolling 7-day total, which was wrong in a
- * way worth recording. A rolling window double-counts every spike: a busy day
- * enters the window (green candle) and seven days later leaves it (red candle
- * of almost the same height), so the chart alternated up/down/up/down through
- * the busiest stretch of the year and reported reversals that never happened.
- * Non-overlapping periods have no echo -- each contribution is counted once,
- * in exactly one candle -- and consecutive candles chain because a month's
- * last week is adjacent to the next month's first.
+ * Two earlier attempts are worth recording, because both failed for reasons
+ * that are easy to walk back into:
  *
- * The in-progress week is excluded. A week still running is not an
- * observation, and including it would drag the newest candle down a little
- * further every time the cards regenerate mid-week.
+ *   Rolling 7-day totals. A rolling window double-counts every spike -- a busy
+ *   day enters the window as a green candle and seven days later leaves it as a
+ *   red one of almost the same height -- so the chart alternated up/down/up/down
+ *   through the busiest stretch of the year and reported reversals that never
+ *   happened. The echo comes from the OVERLAP, not from the period length.
  *
- * This is the one card allowed a second colour (see DOWN): up and down have to
- * be opposites or the chart says nothing.
+ *   Monthly candles. Correct, but eighteen of them across the card is too
+ *   coarse to read: a year of work compresses into a handful of bodies and the
+ *   variation that makes the chart worth drawing disappears.
+ *
+ * Non-overlapping weeks fix both. Every contribution is counted once, in
+ * exactly one candle, and there are enough candles to show a shape.
+ *
+ * This is the one card allowed a second colour (03-DESIGN-SYSTEM.md §2), and
+ * direction is additionally encoded as hollow-vs-solid so it survives colour
+ * blindness and greyscale.
  */
 function activityCard(data, t) {
   const H = 268;
@@ -1020,34 +1026,27 @@ function activityCard(data, t) {
   const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
   const thisSunday = todayUTC - new Date(todayUTC).getUTCDay() * DAY;
 
-  // Every complete Sunday-to-Saturday week, newest last, bucketed by the month
-  // its Sunday falls in.
-  const byMonth = new Map();
-  for (let w = ACTIVITY_MONTHS * 5 + 8; w >= 1; w--) {
+  const candles = [];
+  for (let w = ACTIVITY_WEEKS - 1; w >= 0; w--) {
     const start = thisSunday - w * 7 * DAY;
-    if (start + 6 * DAY > todayUTC) continue;
-    let total = 0;
-    for (let d = 0; d < 7; d++) total += data.days.get(iso(new Date(start + d * DAY))) || 0;
-    const key = iso(new Date(start)).slice(0, 7);
-    if (!byMonth.has(key)) byMonth.set(key, []);
-    byMonth.get(key).push(total);
+    const ticks = [];
+    for (let d = 0; d < 7 && start + d * DAY <= todayUTC; d++) {
+      ticks.push(data.days.get(iso(new Date(start + d * DAY))) || 0);
+    }
+    if (!ticks.length) continue;
+    candles.push({
+      start: iso(new Date(start)),
+      open: ticks[0],
+      close: ticks.at(-1),
+      high: Math.max(...ticks),
+      low: Math.min(...ticks),
+      sum: ticks.reduce((a, b) => a + b, 0),
+    });
   }
-
-  const candles = [...byMonth.entries()]
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .slice(-ACTIVITY_MONTHS)
-    .map(([key, totals]) => ({
-      key,
-      open: totals[0],
-      close: totals.at(-1),
-      high: Math.max(...totals),
-      low: Math.min(...totals),
-      sum: totals.reduce((a, b) => a + b, 0),
-    }));
 
   const hi = Math.max(1, ...candles.map((c) => c.high));
   const slot = plotW / candles.length;
-  const bodyW = Math.min(slot * 0.54, 22);
+  const bodyW = Math.min(slot * 0.6, 12);
   const cxOf = (i) => plot.left + slot * i + slot / 2;
   // Zero is the true floor of a contribution count, so the axis starts there
   // rather than at the series minimum -- a zoomed baseline would exaggerate
@@ -1078,27 +1077,27 @@ function activityCard(data, t) {
     const stroke = up ? t.accent : t.down;
     const cx = round(cxOf(i));
     const top = round(y(Math.max(c.open, c.close)));
-    const h = Math.max(2, round(Math.abs(y(c.open) - y(c.close))));
+    const h = Math.max(1.5, round(Math.abs(y(c.open) - y(c.close))));
     // Below about 4px a hollow body is all outline and reads as a smudge, so a
-    // near-flat month falls back to solid -- there is no direction worth
+    // near-flat week falls back to solid -- there is no direction worth
     // encoding in it anyway.
     const hollow = up && h >= 4;
-    const delay = 0.12 + (i / candles.length) * 0.7;
+    const delay = 0.1 + (i / candles.length) * 0.7;
     return (
       `  <g${anim('rise', delay)}>\n` +
       `    <line x1="${cx}" y1="${round(y(c.high))}" x2="${cx}" y2="${round(y(c.low))}"` +
-      ` stroke="${stroke}" stroke-width="1.4" stroke-linecap="round"/>\n` +
+      ` stroke="${stroke}" stroke-width="1.2" stroke-linecap="round"/>\n` +
       `    <rect x="${round(cx - bodyW / 2)}" y="${top}" width="${round(bodyW)}"` +
-      ` height="${h}" rx="1.5" fill="${hollow ? t.surface : stroke}"` +
-      (hollow ? ` stroke="${stroke}" stroke-width="1.6"` : '') +
+      ` height="${h}" rx="1" fill="${hollow ? t.surface : stroke}"` +
+      (hollow ? ` stroke="${stroke}" stroke-width="1.3"` : '') +
       `/>\n` +
       `  </g>`
     );
   });
 
-  // A 3-month average of the closes, the way a chart carries its moving
+  // A 4-week average of the closes, the way a chart carries its moving
   // average: neutral and thin, guiding the eye without competing.
-  const MA = 3;
+  const MA = 4;
   const maPoints = candles
     .map((c, i) => {
       if (i < MA - 1) return null;
@@ -1112,10 +1111,12 @@ function activityCard(data, t) {
       ` pathLength="1" stroke-dasharray="1" stroke-dashoffset="0"${anim('draw', 0.5)}/>`
     : null;
 
-  // Month under every candle; the year only where it changes, so the axis says
-  // which January it is without repeating itself twelve times.
+  // One label per month, on the first week that opens in it; the year only
+  // where it changes, so the axis says which January without repeating itself.
   const xLabels = candles.flatMap((c, i) => {
-    const [yr, mo] = c.key.split('-').map(Number);
+    const month = c.start.slice(0, 7);
+    if (i > 0 && candles[i - 1].start.slice(0, 7) === month) return [];
+    const [yr, mo] = month.split('-').map(Number);
     const out = [
       text(cxOf(i), plot.top + plotH + 20, MONTHS[mo - 1], {
         size: 9,
@@ -1125,7 +1126,7 @@ function activityCard(data, t) {
         delay: 0.85 + (i / candles.length) * 0.3,
       }),
     ];
-    if (i === 0 || Number(candles[i - 1].key.slice(0, 4)) !== yr) {
+    if (i === 0 || Number(candles[i - 1].start.slice(0, 4)) !== yr) {
       out.push(
         text(cxOf(i), plot.top + plotH + 32, String(yr), {
           size: 8.5,
@@ -1141,8 +1142,8 @@ function activityCard(data, t) {
   });
 
   // Legend: two miniature candles, so the colour rule needs no sentence. It
-  // sits up beside the header rather than under the plot, where it was landing
-  // on top of the last two month labels.
+  // sits beside the header rather than under the plot, where it landed on top
+  // of the last month labels.
   const legendX = D.w - D.pad - 92;
   const key = ['up', 'down'].flatMap((dir, i) => {
     const x = legendX + i * 50;
@@ -1158,12 +1159,14 @@ function activityCard(data, t) {
   });
 
   const ups = candles.filter((c) => c.close >= c.open).length;
+  const total = candles.reduce((a, c) => a + c.sum, 0);
 
   return card(H, t, {
     title: 'Contribution Activity',
     subtitle:
-      `Last ${candles.length} months · one candle per month, priced in weekly contributions · ` +
-      `open = first full week, close = last · ${ups} up / ${candles.length - ups} down`,
+      `Last ${candles.length} weeks · ${comma(total)} contributions · one candle per week, ` +
+      `open = first day, close = last, wick = quietest to busiest day · ` +
+      `${ups} up / ${candles.length - ups} down`,
     body: [...gridLines, ...sticks, maLine, ...xLabels, ...key].filter(Boolean).join('\n'),
   });
 }
