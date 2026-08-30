@@ -264,18 +264,18 @@ chips are all rendered in `--text-3` on `--bg-sunken`. A palette of six tag
 colours is the fastest way to make a senior engineer's site look like a
 bootcamp project.
 
-⚠️ **The one sanctioned exception — approved 2026-08-30.** A candlestick chart
-may use a red counterpart to the accent. Up and down have to be *opposites* or
-the chart states nothing: a down period painted in a paler green is
-indistinguishable from a quiet up period, which destroys the only thing the
-chart exists to show. This is the encoding doing work, not decoration, so it
-does not fall under the rule above.
+⚠️ **The one sanctioned exception — approved 2026-08-30.** A chart whose subject
+is *direction* may use a red counterpart to the accent. Up and down have to be
+opposites or the chart states nothing: a falling period painted in a paler green
+is indistinguishable from a quiet rising one, which destroys the thing the chart
+exists to show. This is the encoding doing work, not decoration, so it does not
+fall under the rule above.
 
 Conditions, so this stays one exception rather than the first of many:
 
 | | |
 | --- | --- |
-| Where | Candlestick / OHLC marks only — never a tag, chip, border or fill elsewhere |
+| Where | Marks whose own meaning is rise-versus-fall — never a tag, chip, border or fill elsewhere |
 | How many | Exactly one card in the profile set (`activity`) |
 | How built | Generated the same way the accent is, from an HSL triple per scheme — not hand-picked |
 | Asymmetry | Deep on white, vivid on black, matching the accent's own logic |
@@ -292,10 +292,21 @@ are near-identical luminances, which is the textbook red-green colour-blindness
 failure: to roughly one man in twelve the two candles are the same grey and the
 chart conveys nothing.
 
-So direction is encoded **twice**: up candles are hollow (surface fill, coloured
-stroke), down candles are solid. That is the original Japanese convention, it
-survives greyscale printing and every form of colour vision, and it costs a
-single attribute.
+So direction is encoded **twice**: up marks are hollow (surface fill, coloured
+stroke), down marks are solid. That is the original Japanese candlestick
+convention, it survives greyscale printing and every form of colour vision, and
+it costs a single attribute. Verified by rendering the card through a
+`grayscale(1)` filter — it must stay fully readable with no hue at all.
+
+📐 **And match the mark to the quantity.** The activity card was a candlestick
+twice before it was a column chart, and both attempts failed the same way:
+contributions are a *volume*, not a *price*. A price is a continuously quoted
+level, so open/high/low/close are four real observations of one thing; a week's
+contributions is a flow — a single number. Forcing four out of it gave first an
+artifact (a rolling window double-counting every spike) and then a lie (a
+158-contribution week drawn as the largest loss on the card, because it opened
+on a Sunday and closed on a quiet Saturday). A column height cannot lie that
+way. Ask what the number *is* before choosing the mark.
 
 ⛔ Anything that merely *would look nicer* in a second colour still takes
 `--text-3` on `--bg-sunken`. Two tests, both of which must pass: does removing

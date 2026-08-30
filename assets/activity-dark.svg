@@ -15,222 +15,66 @@
   </style>
   <rect x="0.5" y="0.5" width="879" height="267" rx="20" fill="#1c1c1e" stroke="#ffffff" stroke-opacity="0.13"/>
   <text x="24" y="36" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="14" font-weight="600" fill="#f5f5f7" letter-spacing="-0.2" class="fade">Contribution Activity</text>
-  <text x="24" y="54" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#86868b" letter-spacing="-0.06" class="fade" style="animation-delay:0.06s">Last 52 weeks · 4,648 contributions · one candle per week, open = first day, close = last, wick = quietest to busiest day · 30 up / 22 down</text>
+  <text x="24" y="54" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#86868b" letter-spacing="-0.06" class="fade" style="animation-delay:0.06s">Last 52 weeks · 4,651 contributions · column height is the week&apos;s total, hollow means up on the week before · 29 up / 22 down · peak 484 · 3 silent weeks</text>
   <line x1="54" y1="92" x2="850" y2="92" stroke="#ffffff" stroke-opacity="0.08"/>
-  <text x="44" y="95.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="end" letter-spacing="-0.05">137</text>
+  <text x="44" y="95.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="end" letter-spacing="-0.05">484</text>
   <line x1="54" y1="157" x2="850" y2="157" stroke="#ffffff" stroke-opacity="0.08"/>
-  <text x="44" y="160.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="end" letter-spacing="-0.05">69</text>
+  <text x="44" y="160.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="end" letter-spacing="-0.05">242</text>
   <line x1="54" y1="222" x2="850" y2="222" stroke="#ffffff" stroke-opacity="0.08"/>
   <text x="44" y="225.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="end" letter-spacing="-0.05">0</text>
-  <g class="rise" style="animation-delay:0.1s">
-    <line x1="61.65" y1="222" x2="61.65" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="57.06" y="222" width="9.18" height="1.5" rx="1" fill="#4dff9a"/>
-  </g>
-  <g class="rise" style="animation-delay:0.11s">
-    <line x1="76.96" y1="222" x2="76.96" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="72.37" y="222" width="9.18" height="1.5" rx="1" fill="#4dff9a"/>
-  </g>
-  <g class="rise" style="animation-delay:0.13s">
-    <line x1="92.27" y1="214.41" x2="92.27" y2="222" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="87.68" y="214.41" width="9.18" height="6.64" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.14s">
-    <line x1="107.58" y1="214.41" x2="107.58" y2="222" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="102.99" y="214.41" width="9.18" height="7.59" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.15s">
-    <line x1="122.88" y1="209.66" x2="122.88" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="118.29" y="209.66" width="9.18" height="12.34" rx="1" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3"/>
-  </g>
-  <g class="rise" style="animation-delay:0.17s">
-    <line x1="138.19" y1="207.77" x2="138.19" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="133.6" y="222" width="9.18" height="1.5" rx="1" fill="#4dff9a"/>
-  </g>
-  <g class="rise" style="animation-delay:0.18s">
-    <line x1="153.5" y1="213.46" x2="153.5" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="148.91" y="213.46" width="9.18" height="8.54" rx="1" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3"/>
-  </g>
-  <g class="rise" style="animation-delay:0.19s">
-    <line x1="168.81" y1="206.82" x2="168.81" y2="221.05" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="164.22" y="206.82" width="9.18" height="7.59" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.21s">
-    <line x1="184.12" y1="216.31" x2="184.12" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="179.53" y="216.31" width="9.18" height="1.9" rx="1" fill="#4dff9a"/>
-  </g>
-  <g class="rise" style="animation-delay:0.22s">
-    <line x1="199.42" y1="202.07" x2="199.42" y2="222" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="194.83" y="212.51" width="9.18" height="9.49" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.23s">
-    <line x1="214.73" y1="206.82" x2="214.73" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="210.14" y="222" width="9.18" height="1.5" rx="1" fill="#4dff9a"/>
-  </g>
-  <g class="rise" style="animation-delay:0.25s">
-    <line x1="230.04" y1="218.2" x2="230.04" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="225.45" y="218.2" width="9.18" height="3.8" rx="1" fill="#4dff9a"/>
-  </g>
-  <g class="rise" style="animation-delay:0.26s">
-    <line x1="245.35" y1="209.66" x2="245.35" y2="222" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="240.76" y="209.66" width="9.18" height="12.34" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.28s">
-    <line x1="260.65" y1="209.66" x2="260.65" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="256.06" y="209.66" width="9.18" height="9.49" rx="1" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3"/>
-  </g>
-  <g class="rise" style="animation-delay:0.29s">
-    <line x1="275.96" y1="179.3" x2="275.96" y2="221.05" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="271.37" y="179.3" width="9.18" height="31.31" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.3s">
-    <line x1="291.27" y1="166.96" x2="291.27" y2="216.31" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="286.68" y="166.96" width="9.18" height="49.34" rx="1" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3"/>
-  </g>
-  <g class="rise" style="animation-delay:0.32s">
-    <line x1="306.58" y1="207.77" x2="306.58" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="301.99" y="212.51" width="9.18" height="1.9" rx="1" fill="#4dff9a"/>
-  </g>
-  <g class="rise" style="animation-delay:0.33s">
-    <line x1="321.88" y1="150.83" x2="321.88" y2="211.56" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="317.29" y="202.07" width="9.18" height="9.49" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.34s">
-    <line x1="337.19" y1="168.86" x2="337.19" y2="219.15" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="332.6" y="199.23" width="9.18" height="2.85" rx="1" fill="#4dff9a"/>
-  </g>
-  <g class="rise" style="animation-delay:0.36s">
-    <line x1="352.5" y1="188.79" x2="352.5" y2="220.1" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="347.91" y="209.66" width="9.18" height="6.64" rx="1" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3"/>
-  </g>
-  <g class="rise" style="animation-delay:0.37s">
-    <line x1="367.81" y1="189.74" x2="367.81" y2="212.51" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="363.22" y="205.87" width="9.18" height="6.64" rx="1" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3"/>
-  </g>
-  <g class="rise" style="animation-delay:0.38s">
-    <line x1="383.12" y1="161.27" x2="383.12" y2="212.51" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="378.53" y="165.07" width="9.18" height="37.01" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.4s">
-    <line x1="398.42" y1="186.89" x2="398.42" y2="211.56" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="393.83" y="194.48" width="9.18" height="16.13" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.41s">
-    <line x1="413.73" y1="183.09" x2="413.73" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="409.14" y="205.87" width="9.18" height="16.13" rx="1" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3"/>
-  </g>
-  <g class="rise" style="animation-delay:0.42s">
-    <line x1="429.04" y1="183.09" x2="429.04" y2="222" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="424.45" y="205.87" width="9.18" height="16.13" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.44s">
-    <line x1="444.35" y1="218.2" x2="444.35" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="439.76" y="222" width="9.18" height="1.5" rx="1" fill="#4dff9a"/>
-  </g>
-  <g class="rise" style="animation-delay:0.45s">
-    <line x1="459.65" y1="204.92" x2="459.65" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="455.06" y="204.92" width="9.18" height="11.39" rx="1" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3"/>
-  </g>
-  <g class="rise" style="animation-delay:0.46s">
-    <line x1="474.96" y1="198.28" x2="474.96" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="470.37" y="198.28" width="9.18" height="18.03" rx="1" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3"/>
-  </g>
-  <g class="rise" style="animation-delay:0.48s">
-    <line x1="490.27" y1="192.58" x2="490.27" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="485.68" y="192.58" width="9.18" height="18.03" rx="1" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3"/>
-  </g>
-  <g class="rise" style="animation-delay:0.49s">
-    <line x1="505.58" y1="110.98" x2="505.58" y2="222" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="500.99" y="110.98" width="9.18" height="103.43" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.5s">
-    <line x1="520.88" y1="198.28" x2="520.88" y2="222" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="516.29" y="198.28" width="9.18" height="18.03" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.52s">
-    <line x1="536.19" y1="213.46" x2="536.19" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="531.6" y="213.46" width="9.18" height="5.69" rx="1" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3"/>
-  </g>
-  <g class="rise" style="animation-delay:0.53s">
-    <line x1="551.5" y1="206.82" x2="551.5" y2="222" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="546.91" y="212.51" width="9.18" height="7.59" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.54s">
-    <line x1="566.81" y1="214.41" x2="566.81" y2="222" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="562.22" y="217.26" width="9.18" height="3.8" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.56s">
-    <line x1="582.12" y1="202.07" x2="582.12" y2="222" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="577.53" y="202.07" width="9.18" height="19.93" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.57s">
-    <line x1="597.42" y1="214.41" x2="597.42" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="592.83" y="214.41" width="9.18" height="4.74" rx="1" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3"/>
-  </g>
-  <g class="rise" style="animation-delay:0.58s">
-    <line x1="612.73" y1="217.26" x2="612.73" y2="222" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="608.14" y="217.26" width="9.18" height="4.74" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.6s">
-    <line x1="628.04" y1="207.77" x2="628.04" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="623.45" y="219.15" width="9.18" height="1.5" rx="1" fill="#4dff9a"/>
-  </g>
-  <g class="rise" style="animation-delay:0.61s">
-    <line x1="643.35" y1="209.66" x2="643.35" y2="222" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="638.76" y="215.36" width="9.18" height="6.64" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.62s">
-    <line x1="658.65" y1="222" x2="658.65" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="654.06" y="222" width="9.18" height="1.5" rx="1" fill="#4dff9a"/>
-  </g>
-  <g class="rise" style="animation-delay:0.64s">
-    <line x1="673.96" y1="216.31" x2="673.96" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="669.37" y="218.2" width="9.18" height="3.8" rx="1" fill="#4dff9a"/>
-  </g>
-  <g class="rise" style="animation-delay:0.65s">
-    <line x1="689.27" y1="187.84" x2="689.27" y2="210.61" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="684.68" y="187.84" width="9.18" height="4.74" rx="1" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3"/>
-  </g>
-  <g class="rise" style="animation-delay:0.67s">
-    <line x1="704.58" y1="183.09" x2="704.58" y2="215.36" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="699.99" y="190.69" width="9.18" height="14.23" rx="1" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3"/>
-  </g>
-  <g class="rise" style="animation-delay:0.68s">
-    <line x1="719.88" y1="173.61" x2="719.88" y2="221.05" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="715.29" y="178.35" width="9.18" height="39.85" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.69s">
-    <line x1="735.19" y1="187.84" x2="735.19" y2="212.51" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="730.6" y="187.84" width="9.18" height="11.39" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.71s">
-    <line x1="750.5" y1="92" x2="750.5" y2="194.48" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="745.91" y="153.68" width="9.18" height="14.23" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.72s">
-    <line x1="765.81" y1="162.22" x2="765.81" y2="220.1" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="761.22" y="162.22" width="9.18" height="50.29" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.73s">
-    <line x1="781.12" y1="134.7" x2="781.12" y2="219.15" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="776.53" y="134.7" width="9.18" height="49.34" rx="1" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3"/>
-  </g>
-  <g class="rise" style="animation-delay:0.75s">
-    <line x1="796.42" y1="107.18" x2="796.42" y2="219.15" stroke="#ff7a6b" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="791.83" y="107.18" width="9.18" height="81.61" rx="1" fill="#ff7a6b"/>
-  </g>
-  <g class="rise" style="animation-delay:0.76s">
-    <line x1="811.73" y1="153.68" x2="811.73" y2="212.51" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="807.14" y="181.2" width="9.18" height="14.23" rx="1" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3"/>
-  </g>
-  <g class="rise" style="animation-delay:0.77s">
-    <line x1="827.04" y1="197.33" x2="827.04" y2="222" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="822.45" y="200.18" width="9.18" height="13.28" rx="1" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3"/>
-  </g>
-  <g class="rise" style="animation-delay:0.79s">
-    <line x1="842.35" y1="171.71" x2="842.35" y2="171.71" stroke="#4dff9a" stroke-width="1.2" stroke-linecap="round"/>
-    <rect x="837.76" y="171.71" width="9.18" height="1.5" rx="1" fill="#4dff9a"/>
-  </g>
-  <polyline points="107.58 221.76 122.88 218.68 138.19 218.68 153.5 216.78 168.81 214.88 184.12 216.54 199.42 216.54 214.73 218.68 230.04 219.63 245.35 221.05 260.65 217.97 275.96 215.12 291.27 202.31 306.58 199.94 321.88 200.41 337.19 197.57 352.5 208.24 367.81 206.58 383.12 204.21 398.42 207.05 413.73 206.11 429.04 210.14 444.35 215.12 459.65 213.7 474.96 211.8 490.27 204.45 505.58 202.55 520.88 205.39 536.19 209.19 551.5 216.07 566.81 217.73 582.12 219.15 597.42 219.39 612.73 219.86 628.04 219.39 643.35 219.39 658.65 221.29 673.96 220.34 689.27 212.51 704.58 204.68 719.88 203.73 735.19 198.99 750.5 194.01 765.81 199.46 781.12 178.59 796.42 175.98 811.73 179.3 827.04 176.22 842.35 185.47" fill="none" stroke="#86868b" stroke-width="1.5" stroke-opacity="0.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="0" class="draw" style="animation-delay:0.5s"/>
+  <rect x="56.6" y="220" width="10.1" height="2" fill="#2a2a2d" class="bar" style="transform-origin:61.65px 222px;animation-delay:0.1s"/>
+  <rect x="71.91" y="220" width="10.1" height="2" fill="#2a2a2d" class="bar" style="transform-origin:76.96px 222px;animation-delay:0.11s"/>
+  <rect x="87.22" y="219.58" width="10.1" height="2.42" rx="2" fill="#4dff9a" class="bar" style="transform-origin:92.27px 222px;animation-delay:0.13s"/>
+  <rect x="102.53" y="219.31" width="10.1" height="2.69" rx="2" fill="#4dff9a" class="bar" style="transform-origin:107.58px 222px;animation-delay:0.14s"/>
+  <rect x="117.83" y="218.51" width="10.1" height="3.49" rx="2" fill="#4dff9a" class="bar" style="transform-origin:122.88px 222px;animation-delay:0.15s"/>
+  <rect x="133.14" y="217.97" width="10.1" height="4.03" rx="2" fill="#4dff9a" class="bar" style="transform-origin:138.19px 222px;animation-delay:0.17s"/>
+  <rect x="148.45" y="215.29" width="10.1" height="6.71" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:153.5px 222px;animation-delay:0.18s"/>
+  <rect x="163.76" y="211.52" width="10.1" height="10.48" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:168.81px 222px;animation-delay:0.19s"/>
+  <rect x="179.06" y="219.31" width="10.1" height="2.69" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:184.12px 222px;animation-delay:0.21s"/>
+  <rect x="194.37" y="209.91" width="10.1" height="12.09" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:199.42px 222px;animation-delay:0.22s"/>
+  <rect x="209.68" y="208.03" width="10.1" height="13.97" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:214.73px 222px;animation-delay:0.23s"/>
+  <rect x="224.99" y="220.93" width="10.1" height="2" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:230.04px 222px;animation-delay:0.25s"/>
+  <rect x="240.29" y="215.55" width="10.1" height="6.45" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:245.35px 222px;animation-delay:0.26s"/>
+  <rect x="255.6" y="211.52" width="10.1" height="10.48" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:260.65px 222px;animation-delay:0.28s"/>
+  <rect x="270.91" y="188.96" width="10.1" height="33.04" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:275.96px 222px;animation-delay:0.29s"/>
+  <rect x="286.22" y="187.08" width="10.1" height="34.92" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:291.27px 222px;animation-delay:0.3s"/>
+  <rect x="301.53" y="209.11" width="10.1" height="12.89" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:306.58px 222px;animation-delay:0.32s"/>
+  <rect x="316.83" y="155.66" width="10.1" height="66.34" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:321.88px 222px;animation-delay:0.33s"/>
+  <rect x="332.14" y="175.26" width="10.1" height="46.74" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:337.19px 222px;animation-delay:0.34s"/>
+  <rect x="347.45" y="195.95" width="10.1" height="26.05" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:352.5px 222px;animation-delay:0.36s"/>
+  <rect x="362.76" y="190.04" width="10.1" height="31.96" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:367.81px 222px;animation-delay:0.37s"/>
+  <rect x="378.06" y="165.86" width="10.1" height="56.14" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:383.12px 222px;animation-delay:0.38s"/>
+  <rect x="393.37" y="175.53" width="10.1" height="46.47" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:398.42px 222px;animation-delay:0.4s"/>
+  <rect x="408.68" y="189.23" width="10.1" height="32.77" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:413.73px 222px;animation-delay:0.41s"/>
+  <rect x="423.99" y="191.65" width="10.1" height="30.35" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:429.04px 222px;animation-delay:0.42s"/>
+  <rect x="439.29" y="219.05" width="10.1" height="2.95" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:444.35px 222px;animation-delay:0.44s"/>
+  <rect x="454.6" y="213.94" width="10.1" height="8.06" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:459.65px 222px;animation-delay:0.45s"/>
+  <rect x="469.91" y="204" width="10.1" height="18" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:474.96px 222px;animation-delay:0.46s"/>
+  <rect x="485.22" y="206.42" width="10.1" height="15.58" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:490.27px 222px;animation-delay:0.48s"/>
+  <rect x="500.53" y="179.56" width="10.1" height="42.44" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:505.58px 222px;animation-delay:0.49s"/>
+  <rect x="515.83" y="213.14" width="10.1" height="8.86" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:520.88px 222px;animation-delay:0.5s"/>
+  <rect x="531.14" y="216.09" width="10.1" height="5.91" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:536.19px 222px;animation-delay:0.52s"/>
+  <rect x="546.45" y="211.26" width="10.1" height="10.74" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:551.5px 222px;animation-delay:0.53s"/>
+  <rect x="561.76" y="215.02" width="10.1" height="6.98" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:566.81px 222px;animation-delay:0.54s"/>
+  <rect x="577.06" y="214.21" width="10.1" height="7.79" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:582.12px 222px;animation-delay:0.56s"/>
+  <rect x="592.37" y="217.7" width="10.1" height="4.3" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:597.42px 222px;animation-delay:0.57s"/>
+  <rect x="607.68" y="220.66" width="10.1" height="2" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:612.73px 222px;animation-delay:0.58s"/>
+  <rect x="622.99" y="214.48" width="10.1" height="7.52" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:628.04px 222px;animation-delay:0.6s"/>
+  <rect x="638.29" y="214.75" width="10.1" height="7.25" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:643.35px 222px;animation-delay:0.61s"/>
+  <rect x="653.6" y="220" width="10.1" height="2" fill="#2a2a2d" class="bar" style="transform-origin:658.65px 222px;animation-delay:0.62s"/>
+  <rect x="668.91" y="217.17" width="10.1" height="4.83" rx="2" fill="#4dff9a" class="bar" style="transform-origin:673.96px 222px;animation-delay:0.64s"/>
+  <rect x="684.22" y="181.17" width="10.1" height="40.83" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:689.27px 222px;animation-delay:0.65s"/>
+  <rect x="699.53" y="170.7" width="10.1" height="51.3" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:704.58px 222px;animation-delay:0.67s"/>
+  <rect x="714.83" y="187.08" width="10.1" height="34.92" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:719.88px 222px;animation-delay:0.68s"/>
+  <rect x="730.14" y="173.65" width="10.1" height="48.35" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:735.19px 222px;animation-delay:0.69s"/>
+  <rect x="745.45" y="92" width="10.1" height="130" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:750.5px 222px;animation-delay:0.71s"/>
+  <rect x="760.76" y="180.37" width="10.1" height="41.63" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:765.81px 222px;animation-delay:0.72s"/>
+  <rect x="776.06" y="145.45" width="10.1" height="76.55" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:781.12px 222px;animation-delay:0.73s"/>
+  <rect x="791.37" y="157" width="10.1" height="65" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:796.42px 222px;animation-delay:0.75s"/>
+  <rect x="806.68" y="143.3" width="10.1" height="78.7" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="bar" style="transform-origin:811.73px 222px;animation-delay:0.76s"/>
+  <rect x="821.99" y="201.86" width="10.1" height="20.14" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:827.04px 222px;animation-delay:0.77s"/>
+  <rect x="837.29" y="206.96" width="10.1" height="15.04" rx="2" fill="#ff7a6b" class="bar" style="transform-origin:842.35px 222px;animation-delay:0.79s"/>
+  <polyline points="107.58 220.72 122.88 219.85 138.19 218.84 153.5 217.77 168.81 215.82 184.12 216.02 199.42 214.01 214.73 212.2 230.04 214.55 245.35 213.61 260.65 214.01 275.96 209.24 291.27 200.78 306.58 199.17 321.88 185.2 337.19 181.78 352.5 183.99 367.81 179.23 383.12 181.78 398.42 181.85 413.73 180.17 429.04 180.57 444.35 193.86 459.65 203.47 474.96 207.16 490.27 210.85 505.58 200.98 520.88 200.78 536.19 203.8 551.5 205.01 566.81 213.88 582.12 214.14 597.42 214.55 612.73 216.9 628.04 216.76 643.35 216.9 658.65 217.97 673.96 217.1 689.27 208.77 704.58 197.76 719.88 189.03 735.19 178.15 750.5 155.86 765.81 158.28 781.12 147.87 796.42 143.7 811.73 156.53 827.04 161.9 842.35 177.28" fill="none" stroke="#86868b" stroke-width="1.5" stroke-opacity="0.55" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="0" class="draw" style="animation-delay:0.6s"/>
   <text x="61.65" y="242" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:0.85s">Sep</text>
   <text x="61.65" y="254" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="8.5" font-weight="600" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:0.9s">2025</text>
   <text x="122.88" y="242" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:0.87s">Oct</text>
@@ -245,10 +89,8 @@
   <text x="658.65" y="242" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:1.08s">Jun</text>
   <text x="719.88" y="242" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:1.1s">Jul</text>
   <text x="781.12" y="242" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:1.12s">Aug</text>
-  <line x1="768" y1="30" x2="768" y2="44" stroke="#4dff9a" stroke-width="1.4" class="fade" style="animation-delay:1.2s"/>
-  <rect x="764" y="32" width="8" height="10" rx="1.5" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.6" class="fade" style="animation-delay:1.2s"/>
-  <text x="778" y="41" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" letter-spacing="-0.05" class="fade" style="animation-delay:1.22s">up</text>
-  <line x1="818" y1="30" x2="818" y2="44" stroke="#ff7a6b" stroke-width="1.4" class="fade" style="animation-delay:1.2s"/>
-  <rect x="814" y="32" width="8" height="10" rx="1.5" fill="#ff7a6b" class="fade" style="animation-delay:1.2s"/>
-  <text x="828" y="41" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" letter-spacing="-0.05" class="fade" style="animation-delay:1.22s">down</text>
+  <rect x="744" y="30" width="8" height="14" rx="2" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.3" class="fade" style="animation-delay:1.2s"/>
+  <text x="757" y="41" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" letter-spacing="-0.05" class="fade" style="animation-delay:1.22s">up</text>
+  <rect x="802" y="30" width="8" height="14" rx="2" fill="#ff7a6b" class="fade" style="animation-delay:1.2s"/>
+  <text x="815" y="41" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" letter-spacing="-0.05" class="fade" style="animation-delay:1.22s">down</text>
 </svg>

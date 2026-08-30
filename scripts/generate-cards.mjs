@@ -989,31 +989,36 @@ function streakCard(data, t) {
 }
 
 /**
- * A candlestick chart over WEEKS, built the way a weekly candle is built from
- * daily prices: the seven daily contribution counts are the ticks, open is the
- * week's first day, close its last, and the wick spans its quietest and busiest
- * day. Fifty-two of them, so the chart carries a year at a density where the
- * week-to-week movement is actually visible.
+ * Weekly contribution volume: one column per week, its height that week's
+ * total. Hollow when the week beat the one before it, solid when it fell
+ * short.
  *
- * Two earlier attempts are worth recording, because both failed for reasons
- * that are easy to walk back into:
+ * This card was a candlestick chart twice, and both attempts failed for the
+ * same underlying reason, which is worth stating plainly so it is not tried a
+ * third time: CONTRIBUTIONS ARE A VOLUME, NOT A PRICE. A price is a
+ * continuously quoted level, so open, high, low and close are four real
+ * observations of one thing. A week's contributions is a flow -- a single
+ * number. Forcing four out of it produces either an artifact or a lie:
  *
- *   Rolling 7-day totals. A rolling window double-counts every spike -- a busy
- *   day enters the window as a green candle and seven days later leaves it as a
- *   red one of almost the same height -- so the chart alternated up/down/up/down
- *   through the busiest stretch of the year and reported reversals that never
- *   happened. The echo comes from the OVERLAP, not from the period length.
+ *   Rolling 7-day totals gave the artifact. The window double-counted every
+ *   spike -- a busy day entered as a green candle and seven days later left as
+ *   a red one of the same height -- so the chart alternated up/down/up/down and
+ *   reported reversals that never happened.
  *
- *   Monthly candles. Correct, but eighteen of them across the card is too
- *   coarse to read: a year of work compresses into a handful of bodies and the
- *   variation that makes the chart worth drawing disappears.
+ *   Open = the week's first day, close = its last, gave the lie. The week of
+ *   2026-03-29 was the busiest of its quarter at 158 contributions, off a
+ *   117-contribution Sunday. Because Sunday opened high and Saturday closed at
+ *   8, it drew as the largest RED candle on the card, while a 30-contribution
+ *   week beside it drew green. The chart was measuring whether a week tapered
+ *   toward Saturday, which is not a thing anyone wants to know.
  *
- * Non-overlapping weeks fix both. Every contribution is counted once, in
- * exactly one candle, and there are enough candles to show a shape.
+ * A column height cannot lie in that way: tall means more work, an empty slot
+ * means a week that did not happen. This is also what a trading terminal
+ * actually does with volume -- it has never drawn it as candles.
  *
- * This is the one card allowed a second colour (03-DESIGN-SYSTEM.md §2), and
- * direction is additionally encoded as hollow-vs-solid so it survives colour
- * blindness and greyscale.
+ * Direction still carries the accent and its red counterpart
+ * (03-DESIGN-SYSTEM.md §2), and still encodes itself a second time as
+ * hollow-vs-solid, so it survives colour blindness and greyscale.
  */
 function activityCard(data, t) {
   const H = 268;
@@ -1026,39 +1031,31 @@ function activityCard(data, t) {
   const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
   const thisSunday = todayUTC - new Date(todayUTC).getUTCDay() * DAY;
 
-  const candles = [];
+  const weeks = [];
   for (let w = ACTIVITY_WEEKS - 1; w >= 0; w--) {
     const start = thisSunday - w * 7 * DAY;
-    const ticks = [];
+    let total = 0;
+    let counted = 0;
     for (let d = 0; d < 7 && start + d * DAY <= todayUTC; d++) {
-      ticks.push(data.days.get(iso(new Date(start + d * DAY))) || 0);
+      total += data.days.get(iso(new Date(start + d * DAY))) || 0;
+      counted++;
     }
-    if (!ticks.length) continue;
-    candles.push({
-      start: iso(new Date(start)),
-      open: ticks[0],
-      close: ticks.at(-1),
-      high: Math.max(...ticks),
-      low: Math.min(...ticks),
-      sum: ticks.reduce((a, b) => a + b, 0),
-    });
+    if (counted) weeks.push({ start: iso(new Date(start)), total });
   }
 
-  const hi = Math.max(1, ...candles.map((c) => c.high));
-  const slot = plotW / candles.length;
-  const bodyW = Math.min(slot * 0.6, 12);
+  const max = Math.max(1, ...weeks.map((w) => w.total));
+  const slot = plotW / weeks.length;
+  const colW = Math.min(slot * 0.66, 12);
   const cxOf = (i) => plot.left + slot * i + slot / 2;
-  // Zero is the true floor of a contribution count, so the axis starts there
-  // rather than at the series minimum -- a zoomed baseline would exaggerate
-  // every wobble.
-  const y = (v) => plot.top + plotH - (v / hi) * plotH;
+  const baseline = plot.top + plotH;
+  const y = (v) => baseline - (v / max) * plotH;
 
   const gridLines = [0, 0.5, 1].map((f) => {
     const gy = round(plot.top + plotH * f);
     return (
       `  <line x1="${plot.left}" y1="${gy}" x2="${round(plot.left + plotW)}" y2="${gy}"` +
       ` stroke="${t.hairline}" stroke-opacity="${t.softOpacity}"/>\n` +
-      text(plot.left - 10, gy + 3.5, String(Math.round(hi * (1 - f))), {
+      text(plot.left - 10, gy + 3.5, String(Math.round(max * (1 - f))), {
         size: 9,
         fill: t.faint,
         anchor: 'end',
@@ -1066,108 +1063,112 @@ function activityCard(data, t) {
     );
   });
 
-  // Up is hollow, down is solid -- the original Japanese convention, and here
-  // it is a requirement rather than a flourish. The accent and its red
-  // counterpart sit at almost the same luminance (1.15:1 in light, 1.95:1 in
-  // dark), so to a red-green colour-blind reader they are the same grey and
-  // the chart says nothing at all. Body fill carries the direction a second
-  // time, independently of hue, which costs nothing and fixes that outright.
-  const sticks = candles.map((c, i) => {
-    const up = c.close >= c.open;
+  const columns = weeks.map((w, i) => {
+    const prev = i > 0 ? weeks[i - 1].total : null;
+    const up = prev === null || w.total >= prev;
     const stroke = up ? t.accent : t.down;
-    const cx = round(cxOf(i));
-    const top = round(y(Math.max(c.open, c.close)));
-    const h = Math.max(1.5, round(Math.abs(y(c.open) - y(c.close))));
-    // Below about 4px a hollow body is all outline and reads as a smudge, so a
-    // near-flat week falls back to solid -- there is no direction worth
-    // encoding in it anyway.
-    const hollow = up && h >= 4;
-    const delay = 0.1 + (i / candles.length) * 0.7;
+    const x = round(cxOf(i) - colW / 2);
+    const delay = 0.1 + (i / weeks.length) * 0.7;
+    const origin = `transform-origin:${round(cxOf(i))}px ${baseline}px`;
+
+    // A week with nothing in it is the point of the chart, not a gap in it, so
+    // it keeps its slot as a floor stub -- "I did not show up" reads
+    // differently from "no data here".
+    if (w.total === 0) {
+      return (
+        `  <rect x="${x}" y="${round(baseline - 2)}" width="${round(colW)}" height="2"` +
+        ` fill="${t.track}"${anim('bar', delay, origin)}/>`
+      );
+    }
+
+    const h = Math.max(2, round(baseline - y(w.total)));
+    // Below about 5px a hollow column is all outline and reads as a smudge, so
+    // a very quiet week falls back to solid.
+    const hollow = up && h >= 5;
     return (
-      `  <g${anim('rise', delay)}>\n` +
-      `    <line x1="${cx}" y1="${round(y(c.high))}" x2="${cx}" y2="${round(y(c.low))}"` +
-      ` stroke="${stroke}" stroke-width="1.2" stroke-linecap="round"/>\n` +
-      `    <rect x="${round(cx - bodyW / 2)}" y="${top}" width="${round(bodyW)}"` +
-      ` height="${h}" rx="1" fill="${hollow ? t.surface : stroke}"` +
+      `  <rect x="${x}" y="${round(y(w.total))}" width="${round(colW)}" height="${h}" rx="2"` +
+      ` fill="${hollow ? t.surface : stroke}"` +
       (hollow ? ` stroke="${stroke}" stroke-width="1.3"` : '') +
-      `/>\n` +
-      `  </g>`
+      anim('bar', delay, origin) +
+      '/>'
     );
   });
 
-  // A 4-week average of the closes, the way a chart carries its moving
-  // average: neutral and thin, guiding the eye without competing.
+  // A 4-week average across the column tops: the trend line, neutral and thin
+  // so it guides the eye without competing with the bars.
   const MA = 4;
-  const maPoints = candles
-    .map((c, i) => {
+  const maPoints = weeks
+    .map((w, i) => {
       if (i < MA - 1) return null;
-      const mean = candles.slice(i - MA + 1, i + 1).reduce((a, k) => a + k.close, 0) / MA;
+      const mean = weeks.slice(i - MA + 1, i + 1).reduce((a, k) => a + k.total, 0) / MA;
       return `${round(cxOf(i))} ${round(y(mean))}`;
     })
     .filter(Boolean);
   const maLine = maPoints.length
     ? `  <polyline points="${maPoints.join(' ')}" fill="none" stroke="${t.faint}"` +
-      ` stroke-width="1.5" stroke-opacity="0.5" stroke-linecap="round" stroke-linejoin="round"` +
-      ` pathLength="1" stroke-dasharray="1" stroke-dashoffset="0"${anim('draw', 0.5)}/>`
+      ` stroke-width="1.5" stroke-opacity="0.55" stroke-linecap="round" stroke-linejoin="round"` +
+      ` pathLength="1" stroke-dasharray="1" stroke-dashoffset="0"${anim('draw', 0.6)}/>`
     : null;
 
   // One label per month, on the first week that opens in it; the year only
   // where it changes, so the axis says which January without repeating itself.
-  const xLabels = candles.flatMap((c, i) => {
-    const month = c.start.slice(0, 7);
-    if (i > 0 && candles[i - 1].start.slice(0, 7) === month) return [];
+  const xLabels = weeks.flatMap((w, i) => {
+    const month = w.start.slice(0, 7);
+    if (i > 0 && weeks[i - 1].start.slice(0, 7) === month) return [];
     const [yr, mo] = month.split('-').map(Number);
     const out = [
-      text(cxOf(i), plot.top + plotH + 20, MONTHS[mo - 1], {
+      text(cxOf(i), baseline + 20, MONTHS[mo - 1], {
         size: 9,
         fill: t.faint,
         anchor: 'middle',
         cls: 'fade',
-        delay: 0.85 + (i / candles.length) * 0.3,
+        delay: 0.85 + (i / weeks.length) * 0.3,
       }),
     ];
-    if (i === 0 || Number(candles[i - 1].start.slice(0, 4)) !== yr) {
+    if (i === 0 || Number(weeks[i - 1].start.slice(0, 4)) !== yr) {
       out.push(
-        text(cxOf(i), plot.top + plotH + 32, String(yr), {
+        text(cxOf(i), baseline + 32, String(yr), {
           size: 8.5,
           weight: 600,
           fill: t.faint,
           anchor: 'middle',
           cls: 'fade',
-          delay: 0.9 + (i / candles.length) * 0.3,
+          delay: 0.9 + (i / weeks.length) * 0.3,
         })
       );
     }
     return out;
   });
 
-  // Legend: two miniature candles, so the colour rule needs no sentence. It
-  // sits beside the header rather than under the plot, where it landed on top
-  // of the last month labels.
-  const legendX = D.w - D.pad - 92;
-  const key = ['up', 'down'].flatMap((dir, i) => {
-    const x = legendX + i * 50;
-    const up = dir === 'up';
+  // Legend: two miniature columns, so the fill rule needs no sentence. It sits
+  // beside the header rather than under the plot, where it landed on top of
+  // the last month labels.
+  const legendX = D.w - D.pad - 112;
+  const key = [
+    ['up', true],
+    ['down', false],
+  ].flatMap(([label, up], i) => {
+    const x = legendX + i * 58;
     const stroke = up ? t.accent : t.down;
     return [
-      `  <line x1="${x + 4}" y1="30" x2="${x + 4}" y2="44" stroke="${stroke}" stroke-width="1.4"${anim('fade', 1.2)}/>`,
-      `  <rect x="${x}" y="32" width="8" height="10" rx="1.5" fill="${up ? t.surface : stroke}"` +
-        (up ? ` stroke="${stroke}" stroke-width="1.6"` : '') +
+      `  <rect x="${x}" y="30" width="8" height="14" rx="2" fill="${up ? t.surface : stroke}"` +
+        (up ? ` stroke="${stroke}" stroke-width="1.3"` : '') +
         `${anim('fade', 1.2)}/>`,
-      text(x + 14, 41, dir, { size: 9, fill: t.faint, cls: 'fade', delay: 1.22 }),
+      text(x + 13, 41, label, { size: 9, fill: t.faint, cls: 'fade', delay: 1.22 }),
     ];
   });
 
-  const ups = candles.filter((c) => c.close >= c.open).length;
-  const total = candles.reduce((a, c) => a + c.sum, 0);
+  const ups = weeks.filter((w, i) => i > 0 && w.total >= weeks[i - 1].total).length;
+  const total = weeks.reduce((a, w) => a + w.total, 0);
+  const quiet = weeks.filter((w) => w.total === 0).length;
 
   return card(H, t, {
     title: 'Contribution Activity',
     subtitle:
-      `Last ${candles.length} weeks · ${comma(total)} contributions · one candle per week, ` +
-      `open = first day, close = last, wick = quietest to busiest day · ` +
-      `${ups} up / ${candles.length - ups} down`,
-    body: [...gridLines, ...sticks, maLine, ...xLabels, ...key].filter(Boolean).join('\n'),
+      `Last ${weeks.length} weeks · ${comma(total)} contributions · column height is the week's ` +
+      `total, hollow means up on the week before · ${ups} up / ${weeks.length - 1 - ups} down · ` +
+      `peak ${comma(max)}${quiet ? ` · ${quiet} silent ${quiet === 1 ? 'week' : 'weeks'}` : ''}`,
+    body: [...gridLines, ...columns, maLine, ...xLabels, ...key].filter(Boolean).join('\n'),
   });
 }
 
