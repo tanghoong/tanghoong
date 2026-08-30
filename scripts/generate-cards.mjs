@@ -1067,19 +1067,31 @@ function activityCard(data, t) {
     );
   });
 
+  // Up is hollow, down is solid -- the original Japanese convention, and here
+  // it is a requirement rather than a flourish. The accent and its red
+  // counterpart sit at almost the same luminance (1.15:1 in light, 1.95:1 in
+  // dark), so to a red-green colour-blind reader they are the same grey and
+  // the chart says nothing at all. Body fill carries the direction a second
+  // time, independently of hue, which costs nothing and fixes that outright.
   const sticks = candles.map((c, i) => {
     const up = c.close >= c.open;
-    const fill = up ? t.accent : t.down;
+    const stroke = up ? t.accent : t.down;
     const cx = round(cxOf(i));
     const top = round(y(Math.max(c.open, c.close)));
     const h = Math.max(2, round(Math.abs(y(c.open) - y(c.close))));
+    // Below about 4px a hollow body is all outline and reads as a smudge, so a
+    // near-flat month falls back to solid -- there is no direction worth
+    // encoding in it anyway.
+    const hollow = up && h >= 4;
     const delay = 0.12 + (i / candles.length) * 0.7;
     return (
       `  <g${anim('rise', delay)}>\n` +
       `    <line x1="${cx}" y1="${round(y(c.high))}" x2="${cx}" y2="${round(y(c.low))}"` +
-      ` stroke="${fill}" stroke-width="1.4" stroke-linecap="round"/>\n` +
+      ` stroke="${stroke}" stroke-width="1.4" stroke-linecap="round"/>\n` +
       `    <rect x="${round(cx - bodyW / 2)}" y="${top}" width="${round(bodyW)}"` +
-      ` height="${h}" rx="1.5" fill="${fill}"/>\n` +
+      ` height="${h}" rx="1.5" fill="${hollow ? t.surface : stroke}"` +
+      (hollow ? ` stroke="${stroke}" stroke-width="1.6"` : '') +
+      `/>\n` +
       `  </g>`
     );
   });
@@ -1134,10 +1146,13 @@ function activityCard(data, t) {
   const legendX = D.w - D.pad - 92;
   const key = ['up', 'down'].flatMap((dir, i) => {
     const x = legendX + i * 50;
-    const fill = dir === 'up' ? t.accent : t.down;
+    const up = dir === 'up';
+    const stroke = up ? t.accent : t.down;
     return [
-      `  <line x1="${x + 4}" y1="30" x2="${x + 4}" y2="44" stroke="${fill}" stroke-width="1.4"${anim('fade', 1.2)}/>`,
-      `  <rect x="${x}" y="32" width="8" height="10" rx="1.5" fill="${fill}"${anim('fade', 1.2)}/>`,
+      `  <line x1="${x + 4}" y1="30" x2="${x + 4}" y2="44" stroke="${stroke}" stroke-width="1.4"${anim('fade', 1.2)}/>`,
+      `  <rect x="${x}" y="32" width="8" height="10" rx="1.5" fill="${up ? t.surface : stroke}"` +
+        (up ? ` stroke="${stroke}" stroke-width="1.6"` : '') +
+        `${anim('fade', 1.2)}/>`,
       text(x + 14, 41, dir, { size: 9, fill: t.faint, cls: 'fade', delay: 1.22 }),
     ];
   });

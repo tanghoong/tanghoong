@@ -52,7 +52,7 @@
   </g>
   <g class="rise" style="animation-delay:0.39s">
     <line x1="385.67" y1="211.52" x2="385.67" y2="218.51" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
-    <rect x="374.67" y="211.52" width="22" height="6.98" rx="1.5" fill="#4dff9a"/>
+    <rect x="374.67" y="211.52" width="22" height="6.98" rx="1.5" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.6"/>
   </g>
   <g class="rise" style="animation-delay:0.43s">
     <line x1="429.89" y1="208.03" x2="429.89" y2="220.93" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
@@ -72,7 +72,7 @@
   </g>
   <g class="rise" style="animation-delay:0.59s">
     <line x1="606.78" y1="179.56" x2="606.78" y2="219.05" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
-    <rect x="595.78" y="179.56" width="22" height="39.48" rx="1.5" fill="#4dff9a"/>
+    <rect x="595.78" y="179.56" width="22" height="39.48" rx="1.5" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.6"/>
   </g>
   <g class="rise" style="animation-delay:0.63s">
     <line x1="651" y1="211.26" x2="651" y2="216.09" stroke="#ff7a6b" stroke-width="1.4" stroke-linecap="round"/>
@@ -84,11 +84,11 @@
   </g>
   <g class="rise" style="animation-delay:0.7s">
     <line x1="739.44" y1="170.7" x2="739.44" y2="222" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
-    <rect x="728.44" y="170.7" width="22" height="51.3" rx="1.5" fill="#4dff9a"/>
+    <rect x="728.44" y="170.7" width="22" height="51.3" rx="1.5" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.6"/>
   </g>
   <g class="rise" style="animation-delay:0.74s">
     <line x1="783.67" y1="92" x2="783.67" y2="187.08" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
-    <rect x="772.67" y="180.37" width="22" height="6.71" rx="1.5" fill="#4dff9a"/>
+    <rect x="772.67" y="180.37" width="22" height="6.71" rx="1.5" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.6"/>
   </g>
   <g class="rise" style="animation-delay:0.78s">
     <line x1="827.89" y1="143.3" x2="827.89" y2="201.86" stroke="#ff7a6b" stroke-width="1.4" stroke-linecap="round"/>
@@ -116,7 +116,7 @@
   <text x="783.67" y="242" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:1.12s">Jul</text>
   <text x="827.89" y="242" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:1.13s">Aug</text>
   <line x1="768" y1="30" x2="768" y2="44" stroke="#4dff9a" stroke-width="1.4" class="fade" style="animation-delay:1.2s"/>
-  <rect x="764" y="32" width="8" height="10" rx="1.5" fill="#4dff9a" class="fade" style="animation-delay:1.2s"/>
+  <rect x="764" y="32" width="8" height="10" rx="1.5" fill="#1c1c1e" stroke="#4dff9a" stroke-width="1.6" class="fade" style="animation-delay:1.2s"/>
   <text x="778" y="41" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" letter-spacing="-0.05" class="fade" style="animation-delay:1.22s">up</text>
   <line x1="818" y1="30" x2="818" y2="44" stroke="#ff7a6b" stroke-width="1.4" class="fade" style="animation-delay:1.2s"/>
   <rect x="814" y="32" width="8" height="10" rx="1.5" fill="#ff7a6b" class="fade" style="animation-delay:1.2s"/>
