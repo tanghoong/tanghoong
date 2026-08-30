@@ -537,6 +537,21 @@ async function fetchStats() {
       percent: round((size / langBytes) * 100),
     }));
 
+  // `public_repos` on the REST profile is public data, so it comes back the
+  // same whatever token asked. Comparing it against what we could actually
+  // enumerate is the only way to notice an under-scoped token: a repository
+  // the token cannot see is not an error, it is simply absent, and the cards
+  // render perfectly while describing a slice of the account.
+  let visibleRepos = null;
+  try {
+    const res = await fetch(`https://api.github.com/users/${USERNAME}`, {
+      headers: { Authorization: `bearer ${TOKEN}`, 'User-Agent': `${USERNAME}-profile-cards` },
+    });
+    if (res.ok) visibleRepos = (await res.json()).public_repos;
+  } catch {
+    // the check is a courtesy, never a reason to fail the run
+  }
+
   return {
     user,
     totals,
@@ -544,6 +559,7 @@ async function fetchStats() {
     languages,
     langBytes,
     repoCount: repoNames.length,
+    visibleRepos,
     frameworks: SCAN_FRAMEWORKS ? await fetchFrameworks(repoNames) : [],
     days,
     streaks: computeStreaks(days),
@@ -1961,5 +1977,21 @@ for (const [name, render] of Object.entries(cards)) {
 console.log(
   `\n${USERNAME}: ${data.totals.contributions} contributions, ${data.stars} stars, ` +
     `current streak ${data.streaks.current.length}, longest ${data.streaks.longest.length}` +
-    ` (accent=${ACCENT}, animate=${ANIMATE})`
+    ` (accent=${ACCENT}, animate=${ANIMATE})\n` +
+    `  scanned ${data.repoCount} repositories` +
+    (data.visibleRepos === null ? '' : ` (the account has ${data.visibleRepos} public)`) +
+    ` · ${data.languages.length} languages · ${data.frameworks.length} frameworks`
 );
+
+// A properly scoped token sits ABOVE this ratio, often far above it, because
+// the scan includes private repositories that `public_repos` does not. Falling
+// under half the public count means whole swathes of the account are invisible
+// -- which is not an error anywhere, just a quietly wrong chart.
+if (data.visibleRepos && data.repoCount < data.visibleRepos / 2) {
+  console.warn(
+    `\n  WARNING: only ${data.repoCount} of ${data.visibleRepos} repositories were visible to` +
+      ` this token.\n  The language and framework cards now describe that slice, not the` +
+      ` account.\n  Use a personal access token with read:user rather than a repository-scoped` +
+      ` one.\n`
+  );
+}

@@ -30,7 +30,17 @@ jobs:
 
       - name: Generate profile cards
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 🔴 The default GITHUB_TOKEN is an installation token scoped to THIS
+          # repository. It can only enumerate a fraction of the account's repos
+          # -- 28 of 312 when this was written -- which silently turns the
+          # language and framework cards into a chart of that fraction rather
+          # than of the account. That is what put Ruby, a 0.05% language, on the
+          # profile at 2%.
+          #
+          # Fix: create a PAT with read:user (add repo to count private work
+          # too) and save it as the PROFILE_TOKEN secret. Without it this still
+          # runs, just against whatever slice the default token can see.
+          GITHUB_TOKEN: ${{ secrets.PROFILE_TOKEN || secrets.GITHUB_TOKEN }}
           USERNAME: ${{ github.repository_owner }}
           CARD_TITLE: Charlie's Performance
         run: node scripts/generate-cards.mjs

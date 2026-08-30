@@ -27,24 +27,24 @@
     <rect x="56.38" y="213.94" width="18" height="3.49" rx="1.5" fill="#4dff9a"/>
   </g>
   <g class="rise" style="animation-delay:0.15s">
-    <line x1="96.15" y1="204" x2="96.15" y2="213.67" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
-    <rect x="87.15" y="204" width="18" height="9.67" rx="1.5" fill="#4dff9a"/>
+    <line x1="96.15" y1="204" x2="96.15" y2="213.94" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
+    <rect x="87.15" y="204" width="18" height="9.94" rx="1.5" fill="#4dff9a"/>
   </g>
   <g class="rise" style="animation-delay:0.18s">
     <line x1="126.92" y1="201.05" x2="126.92" y2="208.03" stroke="#ff7a6b" stroke-width="1.4" stroke-linecap="round"/>
-    <rect x="117.92" y="202.66" width="18" height="3.49" rx="1.5" fill="#ff7a6b"/>
+    <rect x="117.92" y="202.39" width="18" height="4.03" rx="1.5" fill="#ff7a6b"/>
   </g>
   <g class="rise" style="animation-delay:0.21s">
     <line x1="157.69" y1="173.38" x2="157.69" y2="182.25" stroke="#ff7a6b" stroke-width="1.4" stroke-linecap="round"/>
     <rect x="148.69" y="178.22" width="18" height="2" rx="1.5" fill="#ff7a6b"/>
   </g>
   <g class="rise" style="animation-delay:0.24s">
-    <line x1="188.46" y1="204.27" x2="188.46" y2="212.87" stroke="#ff7a6b" stroke-width="1.4" stroke-linecap="round"/>
-    <rect x="179.46" y="204.27" width="18" height="8.6" rx="1.5" fill="#ff7a6b"/>
+    <line x1="188.46" y1="204.27" x2="188.46" y2="213.14" stroke="#ff7a6b" stroke-width="1.4" stroke-linecap="round"/>
+    <rect x="179.46" y="204.27" width="18" height="8.86" rx="1.5" fill="#ff7a6b"/>
   </g>
   <g class="rise" style="animation-delay:0.27s">
-    <line x1="219.23" y1="216.36" x2="219.23" y2="219.58" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
-    <rect x="210.23" y="216.36" width="18" height="2.69" rx="1.5" fill="#4dff9a"/>
+    <line x1="219.23" y1="216.09" x2="219.23" y2="219.58" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
+    <rect x="210.23" y="216.09" width="18" height="2.95" rx="1.5" fill="#4dff9a"/>
   </g>
   <g class="rise" style="animation-delay:0.3s">
     <line x1="250" y1="207.23" x2="250" y2="214.21" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
@@ -56,7 +56,7 @@
   </g>
   <g class="rise" style="animation-delay:0.37s">
     <line x1="311.54" y1="208.57" x2="311.54" y2="214.21" stroke="#ff7a6b" stroke-width="1.4" stroke-linecap="round"/>
-    <rect x="302.54" y="210.45" width="18" height="3.76" rx="1.5" fill="#ff7a6b"/>
+    <rect x="302.54" y="210.72" width="18" height="3.49" rx="1.5" fill="#ff7a6b"/>
   </g>
   <g class="rise" style="animation-delay:0.4s">
     <line x1="342.31" y1="217.7" x2="342.31" y2="220.12" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
@@ -79,32 +79,32 @@
     <rect x="456.38" y="216.63" width="18" height="5.37" rx="1.5" fill="#ff7a6b"/>
   </g>
   <g class="rise" style="animation-delay:0.55s">
-    <line x1="496.15" y1="216.9" x2="496.15" y2="222" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
-    <rect x="487.15" y="216.9" width="18" height="5.1" rx="1.5" fill="#4dff9a"/>
+    <line x1="496.15" y1="217.17" x2="496.15" y2="222" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
+    <rect x="487.15" y="217.17" width="18" height="4.83" rx="1.5" fill="#4dff9a"/>
   </g>
   <g class="rise" style="animation-delay:0.58s">
-    <line x1="526.92" y1="181.44" x2="526.92" y2="208.84" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
-    <rect x="517.92" y="181.44" width="18" height="27.4" rx="1.5" fill="#4dff9a"/>
+    <line x1="526.92" y1="181.17" x2="526.92" y2="208.84" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
+    <rect x="517.92" y="181.17" width="18" height="27.67" rx="1.5" fill="#4dff9a"/>
   </g>
   <g class="rise" style="animation-delay:0.61s">
-    <line x1="557.69" y1="169.62" x2="557.69" y2="184.67" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
+    <line x1="557.69" y1="169.89" x2="557.69" y2="184.67" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
     <rect x="548.69" y="170.7" width="18" height="13.97" rx="1.5" fill="#4dff9a"/>
   </g>
   <g class="rise" style="animation-delay:0.64s">
-    <line x1="588.46" y1="163.18" x2="588.46" y2="186.81" stroke="#ff7a6b" stroke-width="1.4" stroke-linecap="round"/>
-    <rect x="579.46" y="163.18" width="18" height="23.64" rx="1.5" fill="#ff7a6b"/>
+    <line x1="588.46" y1="163.18" x2="588.46" y2="187.08" stroke="#ff7a6b" stroke-width="1.4" stroke-linecap="round"/>
+    <rect x="579.46" y="163.18" width="18" height="23.9" rx="1.5" fill="#ff7a6b"/>
   </g>
   <g class="rise" style="animation-delay:0.67s">
-    <line x1="619.23" y1="168.01" x2="619.23" y2="189.5" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
-    <rect x="610.23" y="173.65" width="18" height="15.85" rx="1.5" fill="#4dff9a"/>
+    <line x1="619.23" y1="168.01" x2="619.23" y2="189.77" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
+    <rect x="610.23" y="173.65" width="18" height="16.12" rx="1.5" fill="#4dff9a"/>
   </g>
   <g class="rise" style="animation-delay:0.7s">
-    <line x1="650" y1="92" x2="650" y2="164.25" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
-    <rect x="641" y="92" width="18" height="72.25" rx="1.5" fill="#4dff9a"/>
+    <line x1="650" y1="92" x2="650" y2="163.98" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
+    <rect x="641" y="92" width="18" height="71.98" rx="1.5" fill="#4dff9a"/>
   </g>
   <g class="rise" style="animation-delay:0.74s">
-    <line x1="680.77" y1="93.34" x2="680.77" y2="180.64" stroke="#ff7a6b" stroke-width="1.4" stroke-linecap="round"/>
-    <rect x="671.77" y="94.42" width="18" height="86.22" rx="1.5" fill="#ff7a6b"/>
+    <line x1="680.77" y1="93.34" x2="680.77" y2="180.37" stroke="#ff7a6b" stroke-width="1.4" stroke-linecap="round"/>
+    <rect x="671.77" y="94.42" width="18" height="85.95" rx="1.5" fill="#ff7a6b"/>
   </g>
   <g class="rise" style="animation-delay:0.77s">
     <line x1="711.54" y1="145.45" x2="711.54" y2="186.55" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
@@ -123,10 +123,10 @@
     <rect x="794.85" y="148.4" width="18" height="53.45" rx="1.5" fill="#ff7a6b"/>
   </g>
   <g class="rise" style="animation-delay:0.89s">
-    <line x1="834.62" y1="191.65" x2="834.62" y2="191.65" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
-    <rect x="825.62" y="191.65" width="18" height="2" rx="1.5" fill="#4dff9a"/>
+    <line x1="834.62" y1="191.38" x2="834.62" y2="191.38" stroke="#4dff9a" stroke-width="1.4" stroke-linecap="round"/>
+    <rect x="825.62" y="191.38" width="18" height="2" rx="1.5" fill="#4dff9a"/>
   </g>
-  <polyline points="157.69 200.98 188.46 200.71 219.23 203.8 250 205.08 280.77 213.88 311.54 214.21 342.31 214.55 373.08 216.9 403.85 216.76 434.62 216.9 465.38 217.97 496.15 217.03 526.92 208.77 557.69 197.76 588.46 188.96 619.23 178.15 650 155.79 680.77 158.28 711.54 147.93 742.31 143.77 773.08 156.6 803.85 161.9 834.62 173.45" fill="none" stroke="#86868b" stroke-width="1.5" stroke-opacity="0.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="0" class="draw" style="animation-delay:0.5s"/>
+  <polyline points="157.69 200.98 188.46 200.78 219.23 203.8 250 205.01 280.77 213.88 311.54 214.14 342.31 214.55 373.08 216.9 403.85 216.76 434.62 216.9 465.38 217.97 496.15 217.1 526.92 208.77 557.69 197.76 588.46 189.03 619.23 178.15 650 155.86 680.77 158.28 711.54 147.87 742.31 143.7 773.08 156.53 803.85 161.9 834.62 173.38" fill="none" stroke="#86868b" stroke-width="1.5" stroke-opacity="0.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="0" class="draw" style="animation-delay:0.5s"/>
   <text x="65.38" y="244" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:0.9s">Mar</text>
   <text x="188.46" y="244" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:0.95s">Apr</text>
   <text x="311.54" y="244" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="9" font-weight="400" fill="#86868b" text-anchor="middle" letter-spacing="-0.05" class="fade" style="animation-delay:0.99s">May</text>
