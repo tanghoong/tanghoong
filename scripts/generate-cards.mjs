@@ -92,14 +92,24 @@ const SCALES = {
 };
 
 /**
- * The one deliberate exception to §2's single accent. A candlestick chart is
- * only readable because up and down are opposite colours -- painting a down
- * week in a paler green would destroy the thing the chart exists to show. It
- * is built the same way the accent is (deep on white, vivid on black) so it
- * reads as the accent's counterpart rather than as a second brand colour, and
- * it appears on exactly one card.
+ * A down week is drawn in grey, not red, so §2's single-accent rule holds
+ * across the whole profile with no exception to police.
+ *
+ * Red was tried and dropped. On a profile page it shouts -- it reads as an
+ * error state rather than as a quieter week -- and it was never doing the work
+ * anyway: red against green is 1.15:1 in light and 1.95:1 in dark, so to a
+ * red-green colour-blind reader the two bars were the same grey. Grey against
+ * the accent is 3.45:1 and 8.02:1, which separates them for everyone, in
+ * greyscale included.
+ *
+ * The pairing is asymmetric for the same reason the accent is: the light
+ * accent is deep, so its grey is light; the dark accent is vivid, so its grey
+ * is dark. `edge` exists because a recessive fill still has to read as a bar.
  */
-const DOWN = { light: [4, 74, 40], dark: [6, 100, 71] };
+const QUIET = {
+  light: { fill: '#c7c7cc', edge: '#a1a1a6' },
+  dark: { fill: '#3f3f44', edge: '#6e6e73' },
+};
 
 /** Ink that stays legible on an arbitrary fill -- used by the treemap. */
 const inkOn = (hex) => {
@@ -113,7 +123,7 @@ const inkOn = (hex) => {
 
 const makeTheme = (mode, base) => {
   const [h, s, l] = SCALES[ACCENT][mode];
-  const [dh, ds, dl] = DOWN[mode];
+  const quiet = QUIET[mode];
   const shadeAt =
     mode === 'light'
       ? (t) => hslToHex(h, s - (1 - t) * 34, 80 - t * (80 - l))
@@ -121,8 +131,8 @@ const makeTheme = (mode, base) => {
   return {
     ...base,
     accent: hslToHex(h, s, l),
-    down: hslToHex(dh, ds, dl),
-    downSoft: hslToHex(dh, ds - 14, mode === 'light' ? dl + 10 : dl - 10),
+    quiet: quiet.fill,
+    quietEdge: quiet.edge,
     shadeAt,
     // Calendar intensity: index 0 is an empty day, so it stays a neutral
     // sunken surface rather than a faint green.
@@ -1016,9 +1026,12 @@ function streakCard(data, t) {
  * means a week that did not happen. This is also what a trading terminal
  * actually does with volume -- it has never drawn it as candles.
  *
- * Direction still carries the accent and its red counterpart
- * (03-DESIGN-SYSTEM.md §2), and still encodes itself a second time as
- * hollow-vs-solid, so it survives colour blindness and greyscale.
+ * Direction is solid accent for a week that grew, grey for one that fell back.
+ * Red was tried here and dropped: on a profile page it reads as an error state
+ * rather than as a quieter week, and it separated from the accent by only
+ * 1.15:1 anyway, which is no separation at all for a red-green colour-blind
+ * reader. Grey separates at 3.45:1 and 8.02:1, so the whole profile is back to
+ * §2's single accent with no exception to police.
  */
 function activityCard(data, t) {
   const H = 268;
@@ -1066,7 +1079,6 @@ function activityCard(data, t) {
   const columns = weeks.map((w, i) => {
     const prev = i > 0 ? weeks[i - 1].total : null;
     const up = prev === null || w.total >= prev;
-    const stroke = up ? t.accent : t.down;
     const x = round(cxOf(i) - colW / 2);
     const delay = 0.1 + (i / weeks.length) * 0.7;
     const origin = `transform-origin:${round(cxOf(i))}px ${baseline}px`;
@@ -1082,13 +1094,13 @@ function activityCard(data, t) {
     }
 
     const h = Math.max(2, round(baseline - y(w.total)));
-    // Below about 5px a hollow column is all outline and reads as a smudge, so
-    // a very quiet week falls back to solid.
-    const hollow = up && h >= 5;
+    // A week that grew is solid accent and carries the eye; a week that fell
+    // back is grey, present but recessive. The grey takes an edge because at
+    // 1.68:1 against the surface the fill alone would not read as a bar.
     return (
       `  <rect x="${x}" y="${round(y(w.total))}" width="${round(colW)}" height="${h}" rx="2"` +
-      ` fill="${hollow ? t.surface : stroke}"` +
-      (hollow ? ` stroke="${stroke}" stroke-width="1.3"` : '') +
+      ` fill="${up ? t.accent : t.quiet}"` +
+      (up ? '' : ` stroke="${t.quietEdge}" stroke-width="1"`) +
       anim('bar', delay, origin) +
       '/>'
     );
@@ -1149,10 +1161,9 @@ function activityCard(data, t) {
     ['down', false],
   ].flatMap(([label, up], i) => {
     const x = legendX + i * 58;
-    const stroke = up ? t.accent : t.down;
     return [
-      `  <rect x="${x}" y="30" width="8" height="14" rx="2" fill="${up ? t.surface : stroke}"` +
-        (up ? ` stroke="${stroke}" stroke-width="1.3"` : '') +
+      `  <rect x="${x}" y="30" width="8" height="14" rx="2" fill="${up ? t.accent : t.quiet}"` +
+        (up ? '' : ` stroke="${t.quietEdge}" stroke-width="1"`) +
         `${anim('fade', 1.2)}/>`,
       text(x + 13, 41, label, { size: 9, fill: t.faint, cls: 'fade', delay: 1.22 }),
     ];
@@ -1166,7 +1177,7 @@ function activityCard(data, t) {
     title: 'Contribution Activity',
     subtitle:
       `Last ${weeks.length} weeks · ${comma(total)} contributions · column height is the week's ` +
-      `total, hollow means up on the week before · ${ups} up / ${weeks.length - 1 - ups} down · ` +
+      `total, green means up on the week before · ${ups} up / ${weeks.length - 1 - ups} down · ` +
       `peak ${comma(max)}${quiet ? ` · ${quiet} silent ${quiet === 1 ? 'week' : 'weeks'}` : ''}`,
     body: [...gridLines, ...columns, maLine, ...xLabels, ...key].filter(Boolean).join('\n'),
   });

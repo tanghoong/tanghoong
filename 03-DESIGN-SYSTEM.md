@@ -2,7 +2,7 @@
 kind: design system
 intent: "Apple / iOS visual language, expressed as tokens rather than as a mood"
 created: "2026-08-27"
-revised: "2026-08-29 — verified against the shipped CSS; §0 added for porting to another repo"
+revised: "2026-08-30 — §2 gains the rise-and-fall rule: one accent holds, grey carries the fall"
 verified_by: "npm run design — fails the build if this document and global.css disagree"
 ---
 
@@ -264,54 +264,56 @@ chips are all rendered in `--text-3` on `--bg-sunken`. A palette of six tag
 colours is the fastest way to make a senior engineer's site look like a
 bootcamp project.
 
-⚠️ **The one sanctioned exception — approved 2026-08-30.** A chart whose subject
-is *direction* may use a red counterpart to the accent. Up and down have to be
-opposites or the chart states nothing: a falling period painted in a paler green
-is indistinguishable from a quiet rising one, which destroys the thing the chart
-exists to show. This is the encoding doing work, not decoration, so it does not
-fall under the rule above.
+⚖️ **A rise-and-fall chart still takes one accent — settled 2026-08-30.** This
+was briefly an exception: the activity card was allowed a red counterpart to
+the accent, on the argument that up and down have to be opposites or the chart
+states nothing. Both halves of that argument turned out to be wrong, and the
+exception was retired the same day it was written.
 
-Conditions, so this stays one exception rather than the first of many:
+| | Red | Grey |
+| --- | --- | --- |
+| Against the accent, light | **1.15:1** | **3.45:1** |
+| Against the accent, dark | **1.95:1** | **8.02:1** |
 
-| | |
-| --- | --- |
-| Where | Marks whose own meaning is rise-versus-fall — never a tag, chip, border or fill elsewhere |
-| How many | Exactly one card in the profile set (`activity`) |
-| How built | Generated the same way the accent is, from an HSL triple per scheme — not hand-picked |
-| Asymmetry | Deep on white, vivid on black, matching the accent's own logic |
+🔴 Red never did the work. Red and green sit at almost the same luminance, so
+to a red-green colour-blind reader — roughly one man in twelve — the two bars
+were the same grey and the chart conveyed nothing. The colour that was supposed
+to be load-bearing was carrying nothing at all.
+
+⛔ And on a profile page red **shouts**. It reads as an error state rather than
+as a quieter week, and it pulled the eye to exactly the weeks least worth
+looking at.
+
+So: a week that grew is solid `--accent`, a week that fell back is grey. Grey
+is recessive by nature, which is the correct relationship — growth leads, a
+pullback recedes — and it separates from the accent for everyone. The pairing
+is asymmetric for the same reason the accent is:
 
 ```js
-// scripts/generate-cards.mjs
-const DOWN = { light: [4, 74, 40], dark: [6, 100, 71] };  // → #b1251b / #ff7a6b
+// scripts/generate-cards.mjs — the light accent is deep, so its grey is light;
+// the dark accent is vivid, so its grey is dark. `edge` exists because a
+// recessive fill still has to read as a bar: 1.68:1 against the surface is not
+// enough on its own, and the stroke is what draws the shape.
+const QUIET = {
+  light: { fill: '#c7c7cc', edge: '#a1a1a6' },
+  dark:  { fill: '#3f3f44', edge: '#6e6e73' },
+};
 ```
 
-🔴 **Colour alone is not allowed to carry it.** Each mark clears its surface
-comfortably — `#b1251b` on `#ffffff` is 6.67:1, `#ff7a6b` on `#1c1c1e` is
-6.68:1 — but red against green is **1.15:1 in light and 1.95:1 in dark**. They
-are near-identical luminances, which is the textbook red-green colour-blindness
-failure: to roughly one man in twelve the two candles are the same grey and the
-chart conveys nothing.
-
-So direction is encoded **twice**: up marks are hollow (surface fill, coloured
-stroke), down marks are solid. That is the original Japanese candlestick
-convention, it survives greyscale printing and every form of colour vision, and
-it costs a single attribute. Verified by rendering the card through a
-`grayscale(1)` filter — it must stay fully readable with no hue at all.
+✅ Verified by rendering the card through a `grayscale(1)` filter: the series
+must stay fully readable with no hue at all. Run that check on any chart whose
+meaning lives in its colours.
 
 📐 **And match the mark to the quantity.** The activity card was a candlestick
 twice before it was a column chart, and both attempts failed the same way:
 contributions are a *volume*, not a *price*. A price is a continuously quoted
-level, so open/high/low/close are four real observations of one thing; a week's
+level, so open/high/low/close are four real observations of one thing; a week’s
 contributions is a flow — a single number. Forcing four out of it gave first an
 artifact (a rolling window double-counting every spike) and then a lie (a
-158-contribution week drawn as the largest loss on the card, because it opened
-on a Sunday and closed on a quiet Saturday). A column height cannot lie that
-way. Ask what the number *is* before choosing the mark.
-
-⛔ Anything that merely *would look nicer* in a second colour still takes
-`--text-3` on `--bg-sunken`. Two tests, both of which must pass: does removing
-the colour remove information, and does a second non-colour channel carry the
-same distinction?
+158-contribution week, the busiest of its quarter, drawn as the largest loss on
+the card because it opened on a Sunday and closed on a quiet Saturday). A
+column height cannot lie that way. Ask what the number *is* before choosing the
+mark.
 
 **Contrast, verified rather than assumed.** `--text` on `--bg` is 17.4:1 light
 and 18.1:1 dark. `--text-3` on `--bg` is 4.8:1 light and 5.2:1 dark — above AA
