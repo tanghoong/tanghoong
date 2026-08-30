@@ -9,7 +9,7 @@
  * Env:
  *   USERNAME          GitHub login to render (default: tanghoong)
  *   CARD_TITLE        Heading on the overview card
- *   ACTIVITY_WEEKS    Weekly candles in the activity chart (default: 26)
+ *   ACTIVITY_MONTHS   Monthly candles in the activity chart (default: 18)
  *   GROWTH_YEARS      Years in the growth chart (default: 2 -- this and last)
  *   ACCENT            "green" (default) or "blue" -- drives every data mark
  *   ANIMATE           "1" (default) or "0" to emit static cards
@@ -27,7 +27,7 @@ const OUT_DIR = join(ROOT, 'assets');
 const TOKEN = process.env.GITHUB_TOKEN;
 const USERNAME = process.env.USERNAME || 'tanghoong';
 const TITLE = process.env.CARD_TITLE || `${USERNAME}'s Performance`;
-const ACTIVITY_WEEKS = Number(process.env.ACTIVITY_WEEKS || 26);
+const ACTIVITY_MONTHS = Number(process.env.ACTIVITY_MONTHS || 18);
 const GROWTH_YEARS = Number(process.env.GROWTH_YEARS || 2);
 const ACCENT = process.env.ACCENT === 'blue' ? 'blue' : 'green';
 const ANIMATE = process.env.ANIMATE !== '0';
@@ -560,6 +560,15 @@ async function fetchStats() {
     langBytes,
     repoCount: repoNames.length,
     visibleRepos,
+    // Every card built from the repository scan carries this. When the token
+    // can see the whole account it is empty and nothing is claimed; when it
+    // cannot, the card says so on its own face rather than quietly presenting
+    // a slice as the whole. A reader should never have to check the Actions
+    // log to know which of the two they are looking at.
+    scopeNote:
+      visibleRepos !== null && repoNames.length < visibleRepos / 2
+        ? ` · ⚠ public repos only (${repoNames.length} of ${visibleRepos} scanned)`
+        : '',
     frameworks: SCAN_FRAMEWORKS ? await fetchFrameworks(repoNames) : [],
     days,
     streaks: computeStreaks(days),
@@ -715,6 +724,11 @@ const text = (
 const card = (h, t, { title, subtitle, body, css = '', panels = [] }) => {
   const W = D.w;
   const heads = panels.length ? panels : [{ x: D.pad, title, subtitle }];
+  // One baseline for every panel title on a card. Deciding per panel meant a
+  // card where only one side had a subtitle -- which is exactly what happens
+  // when the scan is degraded and only the languages panel carries a warning
+  // -- put its two titles 4px out of line with each other.
+  const titleY = heads.some((p) => p.subtitle) ? 36 : 40;
 
   const parts = [
     ANIMATE ? `  <style>${motionBlock(css)}\n  </style>` : null,
@@ -725,7 +739,7 @@ const card = (h, t, { title, subtitle, body, css = '', panels = [] }) => {
     ...heads.flatMap((p, i) =>
       [
         p.title
-          ? text(p.x, p.subtitle ? 36 : 40, p.title, {
+          ? text(p.x, titleY, p.title, {
               size: D.type.title,
               weight: 600,
               fill: t.title,
@@ -910,7 +924,9 @@ function overviewCard(data, t) {
       `\n      @keyframes sweep { from { stroke-dashoffset: ${round(circ)}; } }`,
     panels: [
       { x: L, title: TITLE },
-      { x: R, title: 'Most Used Languages' },
+      // The subtitle exists only in the degraded case, so a fully scanned card
+      // keeps both panel titles on the same baseline.
+      { x: R, title: 'Most Used Languages', subtitle: data.scopeNote.replace(/^ · /, '') },
     ],
     body,
   });
@@ -973,56 +989,65 @@ function streakCard(data, t) {
 }
 
 /**
- * A candlestick chart, read the way a stock chart is read.
+ * A candlestick chart over MONTHS, with each month's complete weeks as its
+ * ticks: open is the month's first full week, close its last, and the wick
+ * spans the quietest and busiest week in between.
  *
- * The "price" is the rolling 7-day contribution total -- current output rate,
- * which unlike a raw daily count varies continuously and so has a meaningful
- * open, high, low and close. Each candle is one week of that series: open is
- * where the rate stood on Sunday, close where it stood on Saturday, and the
- * wick spans its range in between. A week that closed above its open is green,
- * below is red.
+ * The first attempt priced this on a rolling 7-day total, which was wrong in a
+ * way worth recording. A rolling window double-counts every spike: a busy day
+ * enters the window (green candle) and seven days later leaves it (red candle
+ * of almost the same height), so the chart alternated up/down/up/down through
+ * the busiest stretch of the year and reported reversals that never happened.
+ * Non-overlapping periods have no echo -- each contribution is counted once,
+ * in exactly one candle -- and consecutive candles chain because a month's
+ * last week is adjacent to the next month's first.
+ *
+ * The in-progress week is excluded. A week still running is not an
+ * observation, and including it would drag the newest candle down a little
+ * further every time the cards regenerate mid-week.
  *
  * This is the one card allowed a second colour (see DOWN): up and down have to
  * be opposites or the chart says nothing.
  */
 function activityCard(data, t) {
   const H = 268;
-  const plot = { top: 92, right: D.pad + 6, bottom: 46, left: D.pad + 26 };
+  const plot = { top: 92, right: D.pad + 6, bottom: 46, left: D.pad + 30 };
   const plotW = D.w - plot.left - plot.right;
   const plotH = H - plot.top - plot.bottom;
 
-  const today = new Date();
-  const todayUTC = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
   const DAY = 86400000;
-  const count = (ms) => data.days.get(iso(new Date(ms))) || 0;
-  /** The tracked quantity: contributions over the seven days ending on `ms`. */
-  const rate = (ms) => {
-    let sum = 0;
-    for (let k = 0; k < 7; k++) sum += count(ms - k * DAY);
-    return sum;
-  };
-
-  // Weeks run Sunday to Saturday, GitHub's own convention; the newest is the
-  // week containing today, truncated at today.
+  const now = new Date();
+  const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
   const thisSunday = todayUTC - new Date(todayUTC).getUTCDay() * DAY;
-  const candles = [];
-  for (let w = ACTIVITY_WEEKS - 1; w >= 0; w--) {
-    const startMs = thisSunday - w * 7 * DAY;
-    const ticks = [];
-    for (let d = 0; d < 7 && startMs + d * DAY <= todayUTC; d++) ticks.push(rate(startMs + d * DAY));
-    if (!ticks.length) continue;
-    candles.push({
-      start: iso(new Date(startMs)),
-      open: ticks[0],
-      close: ticks.at(-1),
-      high: Math.max(...ticks),
-      low: Math.min(...ticks),
-    });
+
+  // Every complete Sunday-to-Saturday week, newest last, bucketed by the month
+  // its Sunday falls in.
+  const byMonth = new Map();
+  for (let w = ACTIVITY_MONTHS * 5 + 8; w >= 1; w--) {
+    const start = thisSunday - w * 7 * DAY;
+    if (start + 6 * DAY > todayUTC) continue;
+    let total = 0;
+    for (let d = 0; d < 7; d++) total += data.days.get(iso(new Date(start + d * DAY))) || 0;
+    const key = iso(new Date(start)).slice(0, 7);
+    if (!byMonth.has(key)) byMonth.set(key, []);
+    byMonth.get(key).push(total);
   }
+
+  const candles = [...byMonth.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(-ACTIVITY_MONTHS)
+    .map(([key, totals]) => ({
+      key,
+      open: totals[0],
+      close: totals.at(-1),
+      high: Math.max(...totals),
+      low: Math.min(...totals),
+      sum: totals.reduce((a, b) => a + b, 0),
+    }));
 
   const hi = Math.max(1, ...candles.map((c) => c.high));
   const slot = plotW / candles.length;
-  const bodyW = Math.min(slot * 0.6, 18);
+  const bodyW = Math.min(slot * 0.54, 22);
   const cxOf = (i) => plot.left + slot * i + slot / 2;
   // Zero is the true floor of a contribution count, so the axis starts there
   // rather than at the series minimum -- a zoomed baseline would exaggerate
@@ -1048,7 +1073,7 @@ function activityCard(data, t) {
     const cx = round(cxOf(i));
     const top = round(y(Math.max(c.open, c.close)));
     const h = Math.max(2, round(Math.abs(y(c.open) - y(c.close))));
-    const delay = 0.12 + (i / candles.length) * 0.8;
+    const delay = 0.12 + (i / candles.length) * 0.7;
     return (
       `  <g${anim('rise', delay)}>\n` +
       `    <line x1="${cx}" y1="${round(y(c.high))}" x2="${cx}" y2="${round(y(c.low))}"` +
@@ -1059,9 +1084,9 @@ function activityCard(data, t) {
     );
   });
 
-  // A 4-week average of the closes, the way a chart carries its moving average:
-  // neutral and thin, so it guides the eye without competing with the candles.
-  const MA = 4;
+  // A 3-month average of the closes, the way a chart carries its moving
+  // average: neutral and thin, guiding the eye without competing.
+  const MA = 3;
   const maPoints = candles
     .map((c, i) => {
       if (i < MA - 1) return null;
@@ -1075,43 +1100,56 @@ function activityCard(data, t) {
       ` pathLength="1" stroke-dasharray="1" stroke-dashoffset="0"${anim('draw', 0.5)}/>`
     : null;
 
-  // One label per month, placed on the first candle that opens in it.
-  const xLabels = candles
-    .map((c, i) => {
-      const month = c.start.slice(5, 7);
-      if (i > 0 && candles[i - 1].start.slice(5, 7) === month) return null;
-      return text(cxOf(i), plot.top + plotH + 22, MONTHS[Number(month) - 1], {
+  // Month under every candle; the year only where it changes, so the axis says
+  // which January it is without repeating itself twelve times.
+  const xLabels = candles.flatMap((c, i) => {
+    const [yr, mo] = c.key.split('-').map(Number);
+    const out = [
+      text(cxOf(i), plot.top + plotH + 20, MONTHS[mo - 1], {
         size: 9,
         fill: t.faint,
         anchor: 'middle',
         cls: 'fade',
-        delay: 0.9 + (i / candles.length) * 0.3,
-      });
-    })
-    .filter(Boolean);
+        delay: 0.85 + (i / candles.length) * 0.3,
+      }),
+    ];
+    if (i === 0 || Number(candles[i - 1].key.slice(0, 4)) !== yr) {
+      out.push(
+        text(cxOf(i), plot.top + plotH + 32, String(yr), {
+          size: 8.5,
+          weight: 600,
+          fill: t.faint,
+          anchor: 'middle',
+          cls: 'fade',
+          delay: 0.9 + (i / candles.length) * 0.3,
+        })
+      );
+    }
+    return out;
+  });
 
-  // Legend: two miniature candles, so the colour rule needs no sentence.
-  const legendX = D.w - D.pad - 96;
+  // Legend: two miniature candles, so the colour rule needs no sentence. It
+  // sits up beside the header rather than under the plot, where it was landing
+  // on top of the last two month labels.
+  const legendX = D.w - D.pad - 92;
   const key = ['up', 'down'].flatMap((dir, i) => {
-    const x = legendX + i * 52;
+    const x = legendX + i * 50;
     const fill = dir === 'up' ? t.accent : t.down;
     return [
-      `  <line x1="${x + 4}" y1="${H - 34}" x2="${x + 4}" y2="${H - 22}" stroke="${fill}" stroke-width="1.4"${anim('fade', 1.2)}/>`,
-      `  <rect x="${x}" y="${H - 32}" width="8" height="8" rx="1.5" fill="${fill}"${anim('fade', 1.2)}/>`,
-      text(x + 13, H - 24, dir, { size: 9, fill: t.faint, cls: 'fade', delay: 1.22 }),
+      `  <line x1="${x + 4}" y1="30" x2="${x + 4}" y2="44" stroke="${fill}" stroke-width="1.4"${anim('fade', 1.2)}/>`,
+      `  <rect x="${x}" y="32" width="8" height="10" rx="1.5" fill="${fill}"${anim('fade', 1.2)}/>`,
+      text(x + 14, 41, dir, { size: 9, fill: t.faint, cls: 'fade', delay: 1.22 }),
     ];
   });
 
   const ups = candles.filter((c) => c.close >= c.open).length;
 
-  const body = [...gridLines, ...sticks, maLine, ...xLabels, ...key].filter(Boolean).join('\n');
-
   return card(H, t, {
     title: 'Contribution Activity',
     subtitle:
-      `Last ${candles.length} weeks · 7-day rolling contributions · ` +
-      `${ups} up / ${candles.length - ups} down · peak ${hi} · 4-week average`,
-    body,
+      `Last ${candles.length} months · one candle per month, priced in weekly contributions · ` +
+      `open = first full week, close = last · ${ups} up / ${candles.length - ups} down`,
+    body: [...gridLines, ...sticks, maLine, ...xLabels, ...key].filter(Boolean).join('\n'),
   });
 }
 
@@ -1351,14 +1389,15 @@ function languagesCard(data, t) {
     let line = '';
     for (const l of rest) {
       const next = line ? `${line}, ${l.name}` : l.name;
-      if (next.length > 132) {
-        line = `${line}, +${rest.length - line.split(', ').length} more`;
+      if (next.length > 108) {
+        line = `${line}, +${rest.length - line.split(', ').length} others`;
         break;
       }
       line = next;
     }
+    const cut = rest[0].percent;
     tail.push(
-      text(D.pad, H - 16, `Also: ${line}`, {
+      text(D.pad, H - 16, `${rest.length} more at ${cut > 0 ? cut : '<0.01'}% or less: ${line}`, {
         size: D.type.caption,
         fill: t.faint,
         cls: 'fade',
@@ -1373,7 +1412,7 @@ function languagesCard(data, t) {
     title: 'All Languages',
     subtitle:
       `${langs.length} languages · ${mb >= 10 ? Math.round(mb) : round(mb)} MB across ` +
-      `${data.repoCount} repositories · % of bytes, × = repositories using it`,
+      `${data.repoCount} repositories · % of bytes, × = repositories using it` + data.scopeNote,
     css: `\n      .grow-bar { animation: grow 620ms ${EASE} 120ms both; }`,
     body: [
       `  <mask id="langbar"><rect x="${D.pad}" y="${barY}" width="${inner}" height="10" rx="5" fill="#fff"/></mask>`,
@@ -1463,9 +1502,59 @@ function frameworksCard(data, t) {
   const plotH = 232;
   const H = plotY + plotH + 40;
   const GAP = 3;
-  const SHOWN = 14; // fewer, larger boxes -- an unlabelled tile says nothing
 
-  const top = data.frameworks.slice(0, SHOWN);
+  /** Splits a multi-word name at the point that leaves the two halves evenest. */
+  const wrap = (name) => {
+    const parts = name.split(' ');
+    if (parts.length < 2) return null;
+    let at = 1;
+    let best = Infinity;
+    for (let i = 1; i < parts.length; i++) {
+      const diff = Math.abs(parts.slice(0, i).join(' ').length - parts.slice(i).join(' ').length);
+      if (diff < best) {
+        best = diff;
+        at = i;
+      }
+    }
+    return [parts.slice(0, at).join(' '), parts.slice(at).join(' ')];
+  };
+
+  /**
+   * How, if at all, this tile can carry its own name. Tier 1 is the 11px
+   * stacked label with a count under it; tier 2 is 9px centred, on one line or
+   * two. Wrapping matters more than it looks: "Cloudflare Workers" needs 104px
+   * on one line and 63px on two, which is the difference between the card
+   * showing six frameworks and showing fourteen.
+   */
+  const labelPlan = (b, w, h) => {
+    if (h >= 36 && b.name.length * 6.2 + 18 < w) return { tier: 1, lines: [b.name] };
+    if (h >= 20 && b.name.length * 5.1 + 12 < w) return { tier: 2, lines: [b.name] };
+    const two = wrap(b.name);
+    if (two && h >= 30 && Math.max(...two.map((l) => l.length)) * 5.1 + 12 < w) {
+      return { tier: 2, lines: two };
+    }
+    return null;
+  };
+
+  // A tile showing a bare "1" tells the reader nothing -- it was the clearest
+  // fault in the first version of this card. So the item count is not fixed:
+  // it drops until every tile in the layout can carry its own name, and
+  // whatever will not fit is named in the footer instead.
+  let top = [];
+  let boxes = [];
+  for (let n = Math.min(14, data.frameworks.length); n >= 4; n--) {
+    const candidate = data.frameworks.slice(0, n);
+    const laid = squarify(
+      candidate.map((f) => ({ ...f, value: f.repos })),
+      D.pad,
+      plotY,
+      inner,
+      plotH
+    );
+    top = candidate;
+    boxes = laid;
+    if (laid.every((b) => labelPlan(b, b.w - GAP, b.h - GAP))) break;
+  }
 
   if (!top.length) {
     return card(plotY + 60, t, {
@@ -1474,14 +1563,6 @@ function frameworksCard(data, t) {
       body: text(D.pad, plotY + 20, 'Nothing to show yet.', { size: D.type.label, fill: t.faint }),
     });
   }
-
-  const boxes = squarify(
-    top.map((f) => ({ ...f, value: f.repos })),
-    D.pad,
-    plotY,
-    inner,
-    plotH
-  );
 
   const n = boxes.length;
   const cells = boxes.flatMap((b, i) => {
@@ -1496,10 +1577,11 @@ function frameworksCard(data, t) {
     ];
     // Labels only where they fit whole; a clipped framework name is worse than
     // no name, and the legend-free layout depends on every visible word being
-    // complete. Three tiers, so a small tile still carries its name at a
-    // smaller size instead of degrading to a bare number.
+    // complete. The item count above guarantees a tier, so no tile can end up
+    // as an unexplained number.
     const d = 0.3 + i * 0.035;
-    if (h >= 36 && b.name.length * 6.2 + 18 < w) {
+    const plan = labelPlan(b, w, h);
+    if (plan?.tier === 1) {
       out.push(
         text(b.x + 9, b.y + 20, b.name, { size: 11, weight: 600, fill: ink, cls: 'fade', delay: d }),
         text(b.x + 9, b.y + 35, `${b.repos} repos`, {
@@ -1509,60 +1591,421 @@ function frameworksCard(data, t) {
           delay: d + 0.04,
         })
       );
-    } else if (h >= 20 && b.name.length * 5.1 + 12 < w) {
-      out.push(
-        text(b.x + w / 2, b.y + h / 2 + 1, b.name, {
-          size: 9,
-          weight: 600,
-          fill: ink,
-          anchor: 'middle',
-          cls: 'fade',
-          delay: d,
-        }),
-        h >= 32
-          ? text(b.x + w / 2, b.y + h / 2 + 13, String(b.repos), {
-              size: 8.5,
-              fill: ink,
-              anchor: 'middle',
-              tabular: true,
-              cls: 'fade',
-              delay: d + 0.04,
-            })
-          : null
-      );
-    } else if (h >= 16 && w >= 24) {
-      out.push(
-        text(b.x + w / 2, b.y + h / 2 + 3.5, String(b.repos), {
-          size: 10,
-          weight: 600,
-          fill: ink,
-          anchor: 'middle',
-          tabular: true,
-          cls: 'fade',
-          delay: d,
-        })
-      );
+    } else if (plan?.tier === 2) {
+      // The whole label block is centred on the tile: name lines first, then
+      // the count if there is still room under them.
+      const showCount = h >= plan.lines.length * 11 + 14;
+      const blockH = plan.lines.length * 11 + (showCount ? 11 : 0);
+      let ty = b.y + h / 2 - blockH / 2 + 9;
+      for (const line of plan.lines) {
+        out.push(
+          text(b.x + w / 2, ty, line, {
+            size: 9,
+            weight: 600,
+            fill: ink,
+            anchor: 'middle',
+            cls: 'fade',
+            delay: d,
+          })
+        );
+        ty += 11;
+      }
+      if (showCount) {
+        out.push(
+          text(b.x + w / 2, ty, String(b.repos), {
+            size: 8.5,
+            fill: ink,
+            anchor: 'middle',
+            tabular: true,
+            cls: 'fade',
+            delay: d + 0.04,
+          })
+        );
+      }
     }
     return out.filter(Boolean);
   });
 
-  const hidden = data.frameworks.slice(SHOWN);
+  // The tail needs to say WHY it is a tail. "Also: Webpack" left a reader
+  // guessing; naming the threshold it fell under does not.
+  const hidden = data.frameworks.slice(top.length);
+  const cutoff = hidden.length ? hidden[0].repos : 0;
+  const named = hidden.slice(0, 12).map((f) => f.name).join(', ');
   const footer = hidden.length
-    ? text(D.pad, H - 16, `Also: ${hidden.slice(0, 12).map((f) => f.name).join(', ')}` +
-        (hidden.length > 12 ? `, +${hidden.length - 12} more` : ''), {
-        size: D.type.caption,
-        fill: t.faint,
-        cls: 'fade',
-        delay: 0.9,
-      })
+    ? text(
+        D.pad,
+        H - 16,
+        `${hidden.length} more too small to plot, each in ${cutoff} ` +
+          `${cutoff === 1 ? 'repository' : 'repositories'} or fewer: ${named}` +
+          (hidden.length > 12 ? `, +${hidden.length - 12} others` : ''),
+        { size: D.type.caption, fill: t.faint, cls: 'fade', delay: 0.9 }
+      )
     : null;
 
   return card(H, t, {
     title: 'Frameworks & Tooling',
     subtitle:
       `${data.frameworks.length} detected · box area = repositories that depend on it · ` +
-      `read from each repo's dependency manifests`,
+      `read from each repo's dependency manifests` + data.scopeNote,
     body: [...cells, footer].filter(Boolean).join('\n'),
+  });
+}
+
+/* --------------------------------------------------------- ability radar */
+
+/**
+ * Six axes chosen to be things a person can actually be strong or weak at,
+ * rather than six restatements of "writes a lot of code". They have to be
+ * roughly disjoint or the radar just measures volume twice.
+ */
+const ABILITY_AXES = ['Frontend', 'Backend', 'Data & AI', 'Infra & DevOps', 'Systems', 'Testing'];
+
+/**
+ * language -> { axis: weight }. A language that genuinely serves two axes
+ * splits its weight instead of being forced into one: Python really is both
+ * the backend and the data language here, and pretending otherwise would move
+ * 32MB of evidence onto whichever axis won the coin toss.
+ *
+ * Testing has no entry anywhere, on purpose -- test code is written in the
+ * same languages as the thing it tests, so bytes cannot see it. That is why
+ * the score below takes the stronger of two channels rather than their mean.
+ */
+const LANG_AXIS = {
+  TypeScript: { Frontend: 0.75, Backend: 0.25 },
+  JavaScript: { Frontend: 0.75, Backend: 0.25 },
+  HTML: { Frontend: 1 },
+  CSS: { Frontend: 1 },
+  SCSS: { Frontend: 1 },
+  Vue: { Frontend: 1 },
+  Astro: { Frontend: 1 },
+  Svelte: { Frontend: 1 },
+  MDX: { Frontend: 1 },
+  Blade: { Frontend: 1 },
+  Twig: { Frontend: 1 },
+  Mako: { Frontend: 1 },
+  Jinja: { Frontend: 1 },
+  Slim: { Frontend: 1 },
+  PHP: { Backend: 1 },
+  Hack: { Backend: 1 },
+  PLpgSQL: { Backend: 1 },
+  Ruby: { Backend: 1 },
+  Java: { Backend: 1 },
+  Python: { Backend: 0.45, 'Data & AI': 0.55 },
+  'Jupyter Notebook': { 'Data & AI': 1 },
+  Cython: { 'Data & AI': 0.5, Systems: 0.5 },
+  Go: { Backend: 0.5, Systems: 0.5 },
+  Kotlin: { Backend: 0.5, Systems: 0.5 },
+  Rust: { Systems: 1 },
+  C: { Systems: 1 },
+  'C++': { Systems: 1 },
+  Assembly: { Systems: 1 },
+  Shell: { 'Infra & DevOps': 1 },
+  PowerShell: { 'Infra & DevOps': 1 },
+  Batchfile: { 'Infra & DevOps': 1 },
+  Dockerfile: { 'Infra & DevOps': 1 },
+  Makefile: { 'Infra & DevOps': 1 },
+  HCL: { 'Infra & DevOps': 1 },
+  'Inno Setup': { 'Infra & DevOps': 1 },
+  Roff: { 'Infra & DevOps': 1 },
+  'Go Template': { 'Infra & DevOps': 1 },
+};
+
+/** Framework display name -> axis. Anything unmapped contributes nothing. */
+const FRAMEWORK_AXIS = {
+  React: 'Frontend',
+  'React Native': 'Frontend',
+  Expo: 'Frontend',
+  Electron: 'Frontend',
+  PyQt: 'Frontend',
+  Vue: 'Frontend',
+  'Next.js': 'Frontend',
+  Nuxt: 'Frontend',
+  Svelte: 'Frontend',
+  SvelteKit: 'Frontend',
+  Astro: 'Frontend',
+  Angular: 'Frontend',
+  Solid: 'Frontend',
+  'Tailwind CSS': 'Frontend',
+  Bootstrap: 'Frontend',
+  MUI: 'Frontend',
+  Vite: 'Frontend',
+  Webpack: 'Frontend',
+  'Framer Motion': 'Frontend',
+  Redux: 'Frontend',
+  'TanStack Query': 'Frontend',
+  'Three.js': 'Frontend',
+  D3: 'Frontend',
+  'Chart.js': 'Frontend',
+  Express: 'Backend',
+  Fastify: 'Backend',
+  Hono: 'Backend',
+  Koa: 'Backend',
+  NestJS: 'Backend',
+  Elysia: 'Backend',
+  Laravel: 'Backend',
+  Symfony: 'Backend',
+  Slim: 'Backend',
+  Livewire: 'Backend',
+  Filament: 'Backend',
+  Inertia: 'Backend',
+  CodeIgniter: 'Backend',
+  Django: 'Backend',
+  Flask: 'Backend',
+  FastAPI: 'Backend',
+  Prisma: 'Backend',
+  Drizzle: 'Backend',
+  Mongoose: 'Backend',
+  TypeORM: 'Backend',
+  Sequelize: 'Backend',
+  SQLAlchemy: 'Backend',
+  'Socket.IO': 'Backend',
+  Celery: 'Backend',
+  Pydantic: 'Backend',
+  Zod: 'Backend',
+  Requests: 'Backend',
+  Telegraf: 'Backend',
+  'discord.js': 'Backend',
+  'discord.py': 'Backend',
+  'python-telegram-bot': 'Backend',
+  pandas: 'Data & AI',
+  NumPy: 'Data & AI',
+  'scikit-learn': 'Data & AI',
+  PyTorch: 'Data & AI',
+  TensorFlow: 'Data & AI',
+  Transformers: 'Data & AI',
+  LangChain: 'Data & AI',
+  'OpenAI SDK': 'Data & AI',
+  'Anthropic SDK': 'Data & AI',
+  Streamlit: 'Data & AI',
+  Gradio: 'Data & AI',
+  Matplotlib: 'Data & AI',
+  OpenCV: 'Data & AI',
+  Scrapy: 'Data & AI',
+  BeautifulSoup: 'Data & AI',
+  Selenium: 'Data & AI',
+  Puppeteer: 'Data & AI',
+  CCXT: 'Data & AI',
+  'Cloudflare Workers': 'Infra & DevOps',
+  Firebase: 'Infra & DevOps',
+  Supabase: 'Infra & DevOps',
+  Cargo: 'Infra & DevOps',
+  'Go modules': 'Infra & DevOps',
+  Jest: 'Testing',
+  Vitest: 'Testing',
+  Playwright: 'Testing',
+  Cypress: 'Testing',
+  pytest: 'Testing',
+  PHPUnit: 'Testing',
+};
+
+/**
+ * Scores each axis on two independent channels and keeps the STRONGER of the
+ * two, normalised against the leading axis:
+ *
+ *   bytes -- share of code written in that axis's languages
+ *   reach -- share of repositories that pull in that axis's frameworks
+ *
+ * Taking the stronger rather than the mean is what lets Testing register at
+ * all: it has no languages of its own, so averaging in a structural zero would
+ * halve a real signal. It also stops a language-heavy axis being dragged down
+ * by having few named frameworks, and vice versa.
+ *
+ * The result is square-rooted. Raw shares put the leading axis at 100 and
+ * everything else in the bottom fifth of the chart, which draws a spike rather
+ * than a profile and hides exactly the weak-axis detail the card exists to
+ * show. The raw evidence sits beside each axis unscaled, so nothing is hidden
+ * by the compression.
+ */
+function computeAbility(data) {
+  const axes = Object.fromEntries(
+    ABILITY_AXES.map((a) => [a, { bytes: 0, reach: 0, langs: [], frameworks: [] }])
+  );
+
+  for (const lang of data.languages) {
+    const split = LANG_AXIS[lang.name];
+    if (!split) continue;
+    for (const [axis, weight] of Object.entries(split)) {
+      axes[axis].bytes += lang.bytes * weight;
+      axes[axis].langs.push({ name: lang.name, bytes: lang.bytes * weight });
+    }
+  }
+
+  for (const fw of data.frameworks) {
+    const axis = FRAMEWORK_AXIS[fw.name];
+    if (!axis) continue;
+    axes[axis].reach += fw.repos;
+    axes[axis].frameworks.push(fw);
+  }
+
+  const maxBytes = Math.max(1, ...ABILITY_AXES.map((a) => axes[a].bytes));
+  const maxReach = Math.max(1, ...ABILITY_AXES.map((a) => axes[a].reach));
+  const totalBytes = data.langBytes || 1;
+
+  return ABILITY_AXES.map((name) => {
+    const a = axes[name];
+    const raw = Math.max(a.bytes / maxBytes, a.reach / maxReach);
+    return {
+      name,
+      score: Math.round(Math.sqrt(raw) * 100),
+      bytePercent: round((a.bytes / totalBytes) * 100),
+      reach: a.reach,
+      // What the reader should look at to check the score: the two languages
+      // and two frameworks carrying the axis.
+      evidence: [
+        ...a.langs.sort((x, y) => y.bytes - x.bytes).slice(0, 2).map((l) => l.name),
+        ...a.frameworks.slice(0, 2).map((f) => f.name),
+      ],
+    };
+  });
+}
+
+/**
+ * The radar itself on the left, and the same six axes as a ranked list on the
+ * right. The polygon answers "what shape am I" at a glance; the list answers
+ * "why does it say that", which a radar on its own never can.
+ */
+function abilityCard(data, t) {
+  const H = 336;
+  const mid = D.w / 2;
+  const L = D.pad;
+  const R = mid + D.pad;
+  const panelW = mid - D.pad * 2;
+
+  const scores = computeAbility(data);
+  const ranked = [...scores].sort((a, b) => b.score - a.score);
+
+  /* ---- left: the radar ---- */
+
+  const RAD = 84;
+  const cx = L + panelW / 2;
+  const cy = 96 + RAD + 12;
+  const N = ABILITY_AXES.length;
+  // -90deg puts the first axis at the top; the rest run clockwise.
+  const pt = (r, i) => {
+    const ang = ((i / N) * 360 - 90) * (Math.PI / 180);
+    return [cx + r * Math.cos(ang), cy + r * Math.sin(ang)];
+  };
+  const poly = (r, values) =>
+    (values || Array(N).fill(1))
+      .map((v, i) => pt(r * v, i).map(round).join(','))
+      .join(' ');
+
+  const rings = [0.25, 0.5, 0.75, 1].map(
+    (f) =>
+      `  <polygon points="${poly(RAD * f)}" fill="none" stroke="${t.hairline}"` +
+      ` stroke-opacity="${f === 1 ? t.hairlineOpacity : t.softOpacity}"/>`
+  );
+
+  const spokes = ABILITY_AXES.map((_, i) => {
+    const [x, y] = pt(RAD, i);
+    return (
+      `  <line x1="${round(cx)}" y1="${round(cy)}" x2="${round(x)}" y2="${round(y)}"` +
+      ` stroke="${t.hairline}" stroke-opacity="${t.softOpacity}"/>`
+    );
+  });
+
+  const shape = scores.map((s) => s.score / 100);
+  const area =
+    `  <polygon points="${poly(RAD, shape)}" fill="${t.accent}" fill-opacity="${t.areaOpacity}"` +
+    ` stroke="${t.accent}" stroke-width="1.8" stroke-linejoin="round"` +
+    anim('grow-radar', 0.2, `transform-origin:${round(cx)}px ${round(cy)}px`) +
+    '/>';
+
+  const knots = scores.map((s, i) => {
+    const [x, y] = pt(RAD * (s.score / 100), i);
+    return (
+      `  <circle cx="${round(x)}" cy="${round(y)}" r="2.6" fill="${t.accent}"` +
+      anim('fade', 0.5 + i * 0.05) +
+      '/>'
+    );
+  });
+
+  // Axis captions sit outside the outer ring, anchored by which side of the
+  // circle they are on so none of them overhangs the panel.
+  const axisLabels = scores.flatMap((s, i) => {
+    const [x, y] = pt(RAD + 16, i);
+    const dx = x - cx;
+    const anchor = Math.abs(dx) < 6 ? 'middle' : dx > 0 ? 'start' : 'end';
+    return [
+      text(x, y + 3, s.name, {
+        size: 9,
+        weight: 600,
+        fill: t.muted,
+        anchor,
+        cls: 'fade',
+        delay: 0.55 + i * 0.05,
+      }),
+    ];
+  });
+
+  /* ---- right: the same six, ranked, with their evidence ---- */
+
+  const rowH = 36;
+  const barX = R + 96;
+  const barW = panelW - 96 - 34;
+  const rows = ranked.flatMap((s, i) => {
+    const y = 96 + i * rowH;
+    const d = 0.25 + i * 0.06;
+    return [
+      text(R, y + 3, s.name, {
+        size: D.type.label,
+        weight: 600,
+        fill: t.text,
+        cls: 'fade',
+        delay: d,
+      }),
+      `  <rect x="${round(barX)}" y="${round(y - 7)}" width="${round(barW)}" height="9" rx="4.5" fill="${t.track}"/>`,
+      `  <rect x="${round(barX)}" y="${round(y - 7)}" width="${round((s.score / 100) * barW)}"` +
+        ` height="9" rx="4.5" fill="${t.shadeAt(0.4 + 0.6 * (s.score / 100))}"` +
+        anim('grow', d, `transform-origin:${round(barX)}px ${round(y - 2.5)}px`) +
+        '/>',
+      text(R + panelW, y + 3, String(s.score), {
+        size: D.type.label,
+        weight: 600,
+        fill: t.muted,
+        anchor: 'end',
+        tabular: true,
+        cls: 'fade',
+        delay: d + 0.05,
+      }),
+      text(
+        R,
+        y + 18,
+        `${s.bytePercent}% of code · ${s.reach} framework ${s.reach === 1 ? 'use' : 'uses'}` +
+          (s.evidence.length ? ` · ${s.evidence.join(', ')}` : ''),
+        { size: 9, fill: t.faint, cls: 'fade', delay: d + 0.08 }
+      ),
+    ];
+  });
+
+  const strongest = ranked[0];
+  const weakest = ranked.at(-1);
+
+  return card(H, t, {
+    css:
+      `\n      .grow-radar { animation: grow-radar 520ms ${EASE} 200ms both; }` +
+      `\n      @keyframes grow-radar { from { transform: scale(0.4); opacity: 0; } }`,
+    panels: [
+      {
+        x: L,
+        title: 'Ability Profile',
+        subtitle: `Strongest ${strongest.name} · weakest ${weakest.name}`,
+      },
+      {
+        x: R,
+        title: 'What the shape is made of',
+        subtitle: `Stronger of code share and framework reach, square-root scaled${data.scopeNote}`,
+      },
+    ],
+    body: [
+      `  <line x1="${mid}" y1="${D.head - 34}" x2="${mid}" y2="${H - 24}" stroke="${t.hairline}" stroke-opacity="${t.softOpacity}"/>`,
+      ...rings,
+      ...spokes,
+      area,
+      ...knots,
+      ...axisLabels,
+      ...rows,
+    ].join('\n'),
   });
 }
 
@@ -1929,6 +2372,7 @@ await mkdir(OUT_DIR, { recursive: true });
 const cards = {
   overview: overviewCard,
   streak: streakCard,
+  ability: abilityCard,
   activity: activityCard,
   frameworks: frameworksCard,
   languages: languagesCard,

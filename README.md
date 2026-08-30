@@ -21,6 +21,11 @@
 </picture>
 
 <picture>
+  <source srcset="./assets/ability-dark.svg" media="(prefers-color-scheme: dark)" />
+  <img alt="Ability profile radar across six axes" width="100%" src="./assets/ability-light.svg" />
+</picture>
+
+<picture>
   <source srcset="./assets/activity-dark.svg" media="(prefers-color-scheme: dark)" />
   <img alt="Contribution activity as weekly candlesticks" width="100%" src="./assets/activity-light.svg" />
 </picture>
