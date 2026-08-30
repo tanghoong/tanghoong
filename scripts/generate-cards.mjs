@@ -9,10 +9,12 @@
  * Env:
  *   USERNAME          GitHub login to render (default: tanghoong)
  *   CARD_TITLE        Heading on the overview card
- *   ACTIVITY_DAYS     Days in the activity chart (default: 30)
+ *   ACTIVITY_WEEKS    Weekly candles in the activity chart (default: 26)
+ *   GROWTH_YEARS      Years in the growth chart (default: 2 -- this and last)
  *   ACCENT            "green" (default) or "blue" -- drives every data mark
  *   ANIMATE           "1" (default) or "0" to emit static cards
- *   CALENDAR_STYLE    "blocks" (default) or "city" for the skyline calendar
+ *   CALENDAR_STYLE    "clock" (default), "blocks" or "city"
+ *   FRAMEWORKS        "1" (default) or "0" to skip the manifest scan
  */
 
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -25,10 +27,14 @@ const OUT_DIR = join(ROOT, 'assets');
 const TOKEN = process.env.GITHUB_TOKEN;
 const USERNAME = process.env.USERNAME || 'tanghoong';
 const TITLE = process.env.CARD_TITLE || `${USERNAME}'s Performance`;
-const ACTIVITY_DAYS = Number(process.env.ACTIVITY_DAYS || 30);
+const ACTIVITY_WEEKS = Number(process.env.ACTIVITY_WEEKS || 26);
+const GROWTH_YEARS = Number(process.env.GROWTH_YEARS || 2);
 const ACCENT = process.env.ACCENT === 'blue' ? 'blue' : 'green';
 const ANIMATE = process.env.ANIMATE !== '0';
-const CALENDAR_STYLE = process.env.CALENDAR_STYLE === 'city' ? 'city' : 'blocks';
+const CALENDAR_STYLE = ['blocks', 'city', 'clock'].includes(process.env.CALENDAR_STYLE)
+  ? process.env.CALENDAR_STYLE
+  : 'clock';
+const SCAN_FRAMEWORKS = process.env.FRAMEWORKS !== '0';
 
 if (!TOKEN) {
   console.error('GITHUB_TOKEN is required');
@@ -85,8 +91,29 @@ const SCALES = {
   blue: { light: [212, 92, 43], dark: [212, 96, 66] },
 };
 
+/**
+ * The one deliberate exception to §2's single accent. A candlestick chart is
+ * only readable because up and down are opposite colours -- painting a down
+ * week in a paler green would destroy the thing the chart exists to show. It
+ * is built the same way the accent is (deep on white, vivid on black) so it
+ * reads as the accent's counterpart rather than as a second brand colour, and
+ * it appears on exactly one card.
+ */
+const DOWN = { light: [4, 74, 40], dark: [6, 100, 71] };
+
+/** Ink that stays legible on an arbitrary fill -- used by the treemap. */
+const inkOn = (hex) => {
+  const n = parseInt(hex.slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.42 ? '#0a0a0c' : '#ffffff';
+};
+
 const makeTheme = (mode, base) => {
   const [h, s, l] = SCALES[ACCENT][mode];
+  const [dh, ds, dl] = DOWN[mode];
   const shadeAt =
     mode === 'light'
       ? (t) => hslToHex(h, s - (1 - t) * 34, 80 - t * (80 - l))
@@ -94,6 +121,8 @@ const makeTheme = (mode, base) => {
   return {
     ...base,
     accent: hslToHex(h, s, l),
+    down: hslToHex(dh, ds, dl),
+    downSoft: hslToHex(dh, ds - 14, mode === 'light' ? dl + 10 : dl - 10),
     shadeAt,
     // Calendar intensity: index 0 is an empty day, so it stays a neutral
     // sunken surface rather than a faint green.
@@ -212,6 +241,8 @@ const iso = (d) => d.toISOString().slice(0, 10);
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
 const pretty = (isoDate) => {
   const [y, m, d] = isoDate.split('-').map(Number);
   return `${MONTHS[m - 1]} ${d}, ${y}`;
@@ -246,7 +277,12 @@ const anim = (cls, delay = 0, extraStyle = '') => {
 
 /* ------------------------------------------------------------------- data */
 
-async function gql(query, variables) {
+/**
+ * `partial` is for the aliased manifest batches: one unreadable repository in
+ * a batch of 25 comes back as an error alongside 24 perfectly good results, so
+ * throwing would discard the batch over a repo the token simply cannot see.
+ */
+async function gql(query, variables, { partial = false } = {}) {
   const res = await fetch('https://api.github.com/graphql', {
     method: 'POST',
     headers: {
@@ -258,7 +294,9 @@ async function gql(query, variables) {
   });
   if (!res.ok) throw new Error(`GitHub API ${res.status}: ${await res.text()}`);
   const body = await res.json();
-  if (body.errors) throw new Error(`GraphQL: ${JSON.stringify(body.errors)}`);
+  if (body.errors && !(partial && body.data)) {
+    throw new Error(`GraphQL: ${JSON.stringify(body.errors)}`);
+  }
   return body.data;
 }
 
@@ -304,8 +342,9 @@ const REPOS_QUERY = `
       ) {
         pageInfo { hasNextPage endCursor }
         nodes {
+          name
           stargazerCount
-          languages(first: 10, orderBy: { field: SIZE, direction: DESC }) {
+          languages(first: 20, orderBy: { field: SIZE, direction: DESC }) {
             edges { size node { name color } }
           }
         }
@@ -313,6 +352,123 @@ const REPOS_QUERY = `
     }
   }
 `;
+
+/**
+ * GitHub has no framework API, so frameworks are read out of the dependency
+ * manifests. One aliased query fetches every manifest for a batch of repos, so
+ * 300+ repos cost ~13 requests rather than one per file.
+ */
+const MANIFESTS = {
+  pkg: 'package.json',
+  req: 'requirements.txt',
+  pyproj: 'pyproject.toml',
+  composer: 'composer.json',
+  cargo: 'Cargo.toml',
+  gomod: 'go.mod',
+};
+
+/**
+ * dependency name -> display name. Only things that shape how a project is
+ * built are listed: a framework, runtime, ORM, test runner or major library.
+ * Anything unlisted is ignored rather than guessed at, so the chart never
+ * claims a stack that is not there.
+ */
+const NPM_FRAMEWORKS = {
+  next: 'Next.js',
+  react: 'React',
+  'react-native': 'React Native',
+  expo: 'Expo',
+  vue: 'Vue',
+  nuxt: 'Nuxt',
+  svelte: 'Svelte',
+  '@sveltejs/kit': 'SvelteKit',
+  astro: 'Astro',
+  '@angular/core': 'Angular',
+  'solid-js': 'Solid',
+  express: 'Express',
+  fastify: 'Fastify',
+  hono: 'Hono',
+  koa: 'Koa',
+  '@nestjs/core': 'NestJS',
+  elysia: 'Elysia',
+  tailwindcss: 'Tailwind CSS',
+  bootstrap: 'Bootstrap',
+  '@mui/material': 'MUI',
+  electron: 'Electron',
+  vite: 'Vite',
+  webpack: 'Webpack',
+  '@prisma/client': 'Prisma',
+  'drizzle-orm': 'Drizzle',
+  mongoose: 'Mongoose',
+  typeorm: 'TypeORM',
+  sequelize: 'Sequelize',
+  wrangler: 'Cloudflare Workers',
+  '@cloudflare/workers-types': 'Cloudflare Workers',
+  firebase: 'Firebase',
+  '@supabase/supabase-js': 'Supabase',
+  'socket.io': 'Socket.IO',
+  jest: 'Jest',
+  vitest: 'Vitest',
+  '@playwright/test': 'Playwright',
+  cypress: 'Cypress',
+  three: 'Three.js',
+  d3: 'D3',
+  'chart.js': 'Chart.js',
+  'framer-motion': 'Framer Motion',
+  openai: 'OpenAI SDK',
+  '@anthropic-ai/sdk': 'Anthropic SDK',
+  langchain: 'LangChain',
+  'discord.js': 'discord.js',
+  telegraf: 'Telegraf',
+  puppeteer: 'Puppeteer',
+  zod: 'Zod',
+  redux: 'Redux',
+  '@tanstack/react-query': 'TanStack Query',
+};
+
+const PY_FRAMEWORKS = {
+  django: 'Django',
+  flask: 'Flask',
+  fastapi: 'FastAPI',
+  streamlit: 'Streamlit',
+  gradio: 'Gradio',
+  pandas: 'pandas',
+  numpy: 'NumPy',
+  'scikit-learn': 'scikit-learn',
+  torch: 'PyTorch',
+  tensorflow: 'TensorFlow',
+  transformers: 'Transformers',
+  langchain: 'LangChain',
+  openai: 'OpenAI SDK',
+  anthropic: 'Anthropic SDK',
+  scrapy: 'Scrapy',
+  beautifulsoup4: 'BeautifulSoup',
+  selenium: 'Selenium',
+  requests: 'Requests',
+  sqlalchemy: 'SQLAlchemy',
+  pydantic: 'Pydantic',
+  celery: 'Celery',
+  pytest: 'pytest',
+  matplotlib: 'Matplotlib',
+  'opencv-python': 'OpenCV',
+  pyqt5: 'PyQt',
+  ccxt: 'CCXT',
+  'python-telegram-bot': 'python-telegram-bot',
+  'discord.py': 'discord.py',
+};
+
+const PHP_FRAMEWORKS = {
+  'laravel/framework': 'Laravel',
+  'laravel/sanctum': 'Laravel',
+  'symfony/symfony': 'Symfony',
+  'symfony/console': 'Symfony',
+  'slim/slim': 'Slim',
+  'livewire/livewire': 'Livewire',
+  'filament/filament': 'Filament',
+  'inertiajs/inertia-laravel': 'Inertia',
+  'codeigniter4/framework': 'CodeIgniter',
+  'phpunit/phpunit': 'PHPUnit',
+};
 
 async function fetchStats() {
   const { user } = await gql(PROFILE_QUERY, { login: USERNAME });
@@ -352,29 +508,33 @@ async function fetchStats() {
   }
 
   let stars = 0;
+  const repoNames = [];
   const langSizes = new Map();
-  const langColors = new Map();
+  const langRepos = new Map();
   for (let cursor = null, more = true; more; ) {
     const repos = (await gql(REPOS_QUERY, { login: USERNAME, cursor })).user.repositories;
     for (const repo of repos.nodes) {
       stars += repo.stargazerCount;
+      repoNames.push(repo.name);
       for (const { size, node } of repo.languages.edges) {
         langSizes.set(node.name, (langSizes.get(node.name) || 0) + size);
-        langColors.set(node.name, node.color || '#858585');
+        langRepos.set(node.name, (langRepos.get(node.name) || 0) + 1);
       }
     }
     more = repos.pageInfo.hasNextPage;
     cursor = repos.pageInfo.endCursor;
   }
 
-  const langTotal = [...langSizes.values()].reduce((a, b) => a + b, 0) || 1;
+  const langBytes = [...langSizes.values()].reduce((a, b) => a + b, 0) || 1;
+  // Every language, ranked. The overview card takes the head of this list; the
+  // languages card shows the tail that the head hides.
   const languages = [...langSizes.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
     .map(([name, size]) => ({
       name,
-      color: langColors.get(name),
-      percent: round((size / langTotal) * 100),
+      bytes: size,
+      repos: langRepos.get(name),
+      percent: round((size / langBytes) * 100),
     }));
 
   return {
@@ -382,10 +542,98 @@ async function fetchStats() {
     totals,
     stars,
     languages,
+    langBytes,
+    repoCount: repoNames.length,
+    frameworks: SCAN_FRAMEWORKS ? await fetchFrameworks(repoNames) : [],
     days,
     streaks: computeStreaks(days),
     since: iso(createdAt),
   };
+}
+
+/**
+ * Reads every repo's dependency manifests and counts, per framework, how many
+ * repositories declare it. Counting repos rather than lines is what makes the
+ * number mean "how often I reach for this" instead of "how big that project
+ * happened to be".
+ */
+async function fetchFrameworks(repoNames) {
+  const fields = Object.entries(MANIFESTS)
+    .map(([key, file]) => `${key}: object(expression: "HEAD:${file}") { ... on Blob { text } }`)
+    .join(' ');
+
+  const counts = new Map();
+  const BATCH = 25;
+  for (let i = 0; i < repoNames.length; i += BATCH) {
+    const batch = repoNames.slice(i, i + BATCH);
+    const query =
+      `query {\n` +
+      batch
+        .map(
+          (name, j) =>
+            `  r${j}: repository(owner: ${JSON.stringify(USERNAME)},` +
+            ` name: ${JSON.stringify(name)}) { ${fields} }`
+        )
+        .join('\n') +
+      `\n}`;
+
+    let data;
+    try {
+      data = await gql(query, {}, { partial: true });
+    } catch (err) {
+      // A single unreadable repo must not take the whole run down; the chart
+      // degrades to "the ones we could read".
+      console.warn(`framework scan: batch ${i / BATCH} failed -- ${err.message.slice(0, 120)}`);
+      continue;
+    }
+
+    for (const repo of Object.values(data)) {
+      if (!repo) continue;
+      const seen = new Set();
+      const add = (display) => {
+        if (seen.has(display)) return;
+        seen.add(display);
+        counts.set(display, (counts.get(display) || 0) + 1);
+      };
+
+      for (const [text, table] of [
+        [repo.pkg?.text, NPM_FRAMEWORKS],
+        [repo.composer?.text, PHP_FRAMEWORKS],
+      ]) {
+        if (!text) continue;
+        try {
+          const json = JSON.parse(text);
+          const deps = {
+            ...json.dependencies,
+            ...json.devDependencies,
+            ...json.require,
+            ...json['require-dev'],
+          };
+          for (const dep of Object.keys(deps)) if (table[dep]) add(table[dep]);
+        } catch {
+          // an unparseable manifest simply contributes nothing
+        }
+      }
+
+      // requirements.txt and pyproject.toml have no shared grammar worth
+      // parsing, so both are reduced to their identifier tokens and matched
+      // whole -- "requests" hits, "requests-oauthlib" does not.
+      const py = `${repo.req?.text || ''}\n${repo.pyproj?.text || ''}`;
+      if (py.trim()) {
+        const tokens = new Set(py.toLowerCase().split(/[^a-z0-9._-]+/));
+        for (const [dep, display] of Object.entries(PY_FRAMEWORKS)) {
+          if (tokens.has(dep)) add(display);
+        }
+      }
+
+      if (repo.cargo?.text) add('Cargo');
+      if (repo.gomod?.text) add('Go modules');
+    }
+  }
+
+  return [...counts.entries()]
+    .map(([name, repos]) => ({ name, repos }))
+    .sort((a, b) => b.repos - a.repos || a.name.localeCompare(b.name));
 }
 
 /**
@@ -588,11 +836,13 @@ function overviewCard(data, t) {
 
   // §2 / §0.5: one accent, no palette of six. Rank drives the shade, so the
   // bar also reads as a ranking rather than as six unrelated tags.
-  const n = data.languages.length;
+  // The full ranking lives on the languages card; this is only its head.
+  const top = data.languages.slice(0, 6);
+  const n = top.length;
   const langColor = (i) => t.langAt(i, n);
 
   let offset = 0;
-  const segments = data.languages.map((l, i) => {
+  const segments = top.map((l, i) => {
     const w = (l.percent / 100) * panelW;
     const seg =
       `  <rect x="${round(R + offset)}" y="${barY}"` +
@@ -601,7 +851,7 @@ function overviewCard(data, t) {
     return seg;
   });
 
-  const legend = data.languages.map((l, i) => {
+  const legend = top.map((l, i) => {
     const x = R + (i % 2) * colW;
     const y = barY + 42 + Math.floor(i / 2) * 27;
     const d = 0.34 + i * 0.05;
@@ -706,49 +956,69 @@ function streakCard(data, t) {
   return card(H, t, { title: 'Contribution Streak', body });
 }
 
+/**
+ * A candlestick chart, read the way a stock chart is read.
+ *
+ * The "price" is the rolling 7-day contribution total -- current output rate,
+ * which unlike a raw daily count varies continuously and so has a meaningful
+ * open, high, low and close. Each candle is one week of that series: open is
+ * where the rate stood on Sunday, close where it stood on Saturday, and the
+ * wick spans its range in between. A week that closed above its open is green,
+ * below is red.
+ *
+ * This is the one card allowed a second colour (see DOWN): up and down have to
+ * be opposites or the chart says nothing.
+ */
 function activityCard(data, t) {
-  const H = 240;
-  const plot = { top: 84, right: D.pad + 8, bottom: 40, left: D.pad + 22 };
+  const H = 268;
+  const plot = { top: 92, right: D.pad + 6, bottom: 46, left: D.pad + 26 };
   const plotW = D.w - plot.left - plot.right;
   const plotH = H - plot.top - plot.bottom;
 
   const today = new Date();
-  const series = [];
-  for (let i = ACTIVITY_DAYS - 1; i >= 0; i--) {
-    const d = new Date(
-      Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - i)
-    );
-    series.push({ date: iso(d), count: data.days.get(iso(d)) || 0 });
+  const todayUTC = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  const DAY = 86400000;
+  const count = (ms) => data.days.get(iso(new Date(ms))) || 0;
+  /** The tracked quantity: contributions over the seven days ending on `ms`. */
+  const rate = (ms) => {
+    let sum = 0;
+    for (let k = 0; k < 7; k++) sum += count(ms - k * DAY);
+    return sum;
+  };
+
+  // Weeks run Sunday to Saturday, GitHub's own convention; the newest is the
+  // week containing today, truncated at today.
+  const thisSunday = todayUTC - new Date(todayUTC).getUTCDay() * DAY;
+  const candles = [];
+  for (let w = ACTIVITY_WEEKS - 1; w >= 0; w--) {
+    const startMs = thisSunday - w * 7 * DAY;
+    const ticks = [];
+    for (let d = 0; d < 7 && startMs + d * DAY <= todayUTC; d++) ticks.push(rate(startMs + d * DAY));
+    if (!ticks.length) continue;
+    candles.push({
+      start: iso(new Date(startMs)),
+      open: ticks[0],
+      close: ticks.at(-1),
+      high: Math.max(...ticks),
+      low: Math.min(...ticks),
+    });
   }
 
-  const max = Math.max(1, ...series.map((p) => p.count));
-  const x = (i) => plot.left + (i / (series.length - 1)) * plotW;
-  const y = (v) => plot.top + plotH - (v / max) * plotH;
-  const points = series.map((p, i) => [x(i), y(p.count)]);
-  const baseline = plot.top + plotH;
-
-  // Catmull-Rom to cubic bezier, clamped so the curve never leaves the plot.
-  const clamp = (v) => Math.min(baseline, Math.max(plot.top, v));
-  let line = `M ${round(points[0][0])} ${round(points[0][1])}`;
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[i - 1] || points[i];
-    const p1 = points[i];
-    const p2 = points[i + 1];
-    const p3 = points[i + 2] || p2;
-    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, clamp(p1[1] + (p2[1] - p0[1]) / 6)];
-    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, clamp(p2[1] - (p3[1] - p1[1]) / 6)];
-    line +=
-      ` C ${round(c1[0])} ${round(c1[1])}, ${round(c2[0])} ${round(c2[1])},` +
-      ` ${round(p2[0])} ${round(p2[1])}`;
-  }
-  const area = `${line} L ${round(points.at(-1)[0])} ${baseline} L ${round(points[0][0])} ${baseline} Z`;
+  const hi = Math.max(1, ...candles.map((c) => c.high));
+  const slot = plotW / candles.length;
+  const bodyW = Math.min(slot * 0.6, 18);
+  const cxOf = (i) => plot.left + slot * i + slot / 2;
+  // Zero is the true floor of a contribution count, so the axis starts there
+  // rather than at the series minimum -- a zoomed baseline would exaggerate
+  // every wobble.
+  const y = (v) => plot.top + plotH - (v / hi) * plotH;
 
   const gridLines = [0, 0.5, 1].map((f) => {
     const gy = round(plot.top + plotH * f);
     return (
-      `  <line x1="${plot.left}" y1="${gy}" x2="${plot.left + plotW}" y2="${gy}"` +
+      `  <line x1="${plot.left}" y1="${gy}" x2="${round(plot.left + plotW)}" y2="${gy}"` +
       ` stroke="${t.hairline}" stroke-opacity="${t.softOpacity}"/>\n` +
-      text(plot.left - 10, gy + 3.5, String(Math.round(max * (1 - f))), {
+      text(plot.left - 10, gy + 3.5, String(Math.round(hi * (1 - f))), {
         size: 9,
         fill: t.faint,
         anchor: 'end',
@@ -756,66 +1026,92 @@ function activityCard(data, t) {
     );
   });
 
-  // Always label the final day, and drop any stepped label that would collide
-  // with it.
-  const step = Math.max(1, Math.round(series.length / 8));
-  const last = series.length - 1;
-  const minGap = step * 0.6;
-  const xLabels = series
-    .map((p, i) => (i === last || (i % step === 0 && last - i > minGap) ? { p, i } : null))
-    .filter(Boolean)
-    .map(({ p, i }) =>
-      text(x(i), baseline + 20, shortDate(p.date), {
+  const sticks = candles.map((c, i) => {
+    const up = c.close >= c.open;
+    const fill = up ? t.accent : t.down;
+    const cx = round(cxOf(i));
+    const top = round(y(Math.max(c.open, c.close)));
+    const h = Math.max(2, round(Math.abs(y(c.open) - y(c.close))));
+    const delay = 0.12 + (i / candles.length) * 0.8;
+    return (
+      `  <g${anim('rise', delay)}>\n` +
+      `    <line x1="${cx}" y1="${round(y(c.high))}" x2="${cx}" y2="${round(y(c.low))}"` +
+      ` stroke="${fill}" stroke-width="1.4" stroke-linecap="round"/>\n` +
+      `    <rect x="${round(cx - bodyW / 2)}" y="${top}" width="${round(bodyW)}"` +
+      ` height="${h}" rx="1.5" fill="${fill}"/>\n` +
+      `  </g>`
+    );
+  });
+
+  // A 4-week average of the closes, the way a chart carries its moving average:
+  // neutral and thin, so it guides the eye without competing with the candles.
+  const MA = 4;
+  const maPoints = candles
+    .map((c, i) => {
+      if (i < MA - 1) return null;
+      const mean = candles.slice(i - MA + 1, i + 1).reduce((a, k) => a + k.close, 0) / MA;
+      return `${round(cxOf(i))} ${round(y(mean))}`;
+    })
+    .filter(Boolean);
+  const maLine = maPoints.length
+    ? `  <polyline points="${maPoints.join(' ')}" fill="none" stroke="${t.faint}"` +
+      ` stroke-width="1.5" stroke-opacity="0.5" stroke-linecap="round" stroke-linejoin="round"` +
+      ` pathLength="1" stroke-dasharray="1" stroke-dashoffset="0"${anim('draw', 0.5)}/>`
+    : null;
+
+  // One label per month, placed on the first candle that opens in it.
+  const xLabels = candles
+    .map((c, i) => {
+      const month = c.start.slice(5, 7);
+      if (i > 0 && candles[i - 1].start.slice(5, 7) === month) return null;
+      return text(cxOf(i), plot.top + plotH + 22, MONTHS[Number(month) - 1], {
         size: 9,
         fill: t.faint,
         anchor: 'middle',
         cls: 'fade',
-        delay: 0.9 + (i / last) * 0.3,
-      })
-    );
-
-  // Dots pop in behind the advancing line head, so the chart reads left to
-  // right as one gesture.
-  const dots = points
-    .map(([px, py], i) =>
-      series[i].count === 0
-        ? null
-        : `  <circle cx="${round(px)}" cy="${round(py)}" r="2.5" fill="${t.accent}"` +
-          `${anim('fade', 0.25 + (i / last) * 1.15)}/>`
-    )
+        delay: 0.9 + (i / candles.length) * 0.3,
+      });
+    })
     .filter(Boolean);
 
-  const total = series.reduce((a, p) => a + p.count, 0);
+  // Legend: two miniature candles, so the colour rule needs no sentence.
+  const legendX = D.w - D.pad - 96;
+  const key = ['up', 'down'].flatMap((dir, i) => {
+    const x = legendX + i * 52;
+    const fill = dir === 'up' ? t.accent : t.down;
+    return [
+      `  <line x1="${x + 4}" y1="${H - 34}" x2="${x + 4}" y2="${H - 22}" stroke="${fill}" stroke-width="1.4"${anim('fade', 1.2)}/>`,
+      `  <rect x="${x}" y="${H - 32}" width="8" height="8" rx="1.5" fill="${fill}"${anim('fade', 1.2)}/>`,
+      text(x + 13, H - 24, dir, { size: 9, fill: t.faint, cls: 'fade', delay: 1.22 }),
+    ];
+  });
 
-  const body = [
-    '  <linearGradient id="fade-grad" x1="0" y1="0" x2="0" y2="1">',
-    `    <stop offset="0%" stop-color="${t.accent}" stop-opacity="${round(t.areaOpacity * 2.5)}"/>`,
-    `    <stop offset="100%" stop-color="${t.accent}" stop-opacity="0"/>`,
-    '  </linearGradient>',
-    ...gridLines,
-    `  <path d="${area}" fill="url(#fade-grad)"${anim('fade', 0.75)}/>`,
-    `  <path d="${line}" fill="none" stroke="${t.accent}" stroke-width="2"` +
-      ` stroke-linecap="round" stroke-linejoin="round"` +
-      ` pathLength="1" stroke-dasharray="1" stroke-dashoffset="0"${anim('draw', 0.2)}/>`,
-    ...dots,
-    ...xLabels,
-  ].join('\n');
+  const ups = candles.filter((c) => c.close >= c.open).length;
+
+  const body = [...gridLines, ...sticks, maLine, ...xLabels, ...key].filter(Boolean).join('\n');
 
   return card(H, t, {
     title: 'Contribution Activity',
-    subtitle: `Last ${ACTIVITY_DAYS} days · ${comma(total)} contributions · peak ${max} in a day`,
+    subtitle:
+      `Last ${candles.length} weeks · 7-day rolling contributions · ` +
+      `${ups} up / ${candles.length - ups} down · peak ${hi} · 4-week average`,
     body,
   });
 }
 
 /**
- * Two views the other cards cannot show, sharing one card so the profile
- * stays at five: the year-over-year curve (everything else stops at 53 weeks)
- * and the weekday rhythm. Both are derived from `days`, which is already in
- * memory, so neither costs an API call.
+ * Two views the other cards cannot show, sharing one card: how this year is
+ * tracking against last, and the weekday habit underneath it. Both are derived
+ * from `days`, which is already in memory, so neither costs an API call.
+ *
+ * The growth panel used to run the whole account history, which meant a decade
+ * of near-empty stubs squeezing the only two years anyone reads into the last
+ * inch of the axis. It is now the current year against the previous one, drawn
+ * horizontally so the two totals are compared along the card's long edge --
+ * where there is room for the numbers to sit beside their bars.
  */
 function rhythmCard(data, t) {
-  const H = 216;
+  const H = 208;
   const mid = D.w / 2;
   const L = D.pad;
   const R = mid + D.pad;
@@ -832,89 +1128,137 @@ function rhythmCard(data, t) {
     byWeekday[new Date(`${date}T00:00:00Z`).getUTCDay()] += count;
   }
 
-  // Start at the first year that actually has contributions -- an account
-  // created in December can carry a dead first year.
-  const years = [...byYear.keys()].sort((a, b) => a - b).filter((y) => byYear.get(y) > 0);
-  const firstYear = years[0];
-  const span = [];
-  for (let y = firstYear; y <= years.at(-1); y++) span.push([y, byYear.get(y) || 0]);
+  /** Shade tracks value, so a bar's colour and length say the same thing. */
+  const barFill = (v, mx) => t.shadeAt(0.4 + 0.6 * (v / mx));
 
-  /** Shade tracks value, so a bar's colour and height say the same thing. */
-  const barFill = (v, mx) => t.shadeAt(0.35 + 0.65 * (v / mx));
+  /* ---- left: this year against last, newest on top ---- */
 
-  const bars = (items, x0, label, valueLabel) => {
-    const mx = Math.max(1, ...items.map((i) => i[1]));
-    const slot = panelW / items.length;
-    const bw = Math.min(slot * 0.62, 40);
-    return items.flatMap(([key, v], i) => {
-      const cx = x0 + slot * i + slot / 2;
-      const h = (v / mx) * plotH;
-      const y = baseline - h;
-      const delay = 0.12 + i * 0.04;
-      const out = [
-        `  <rect x="${round(cx - bw / 2)}" y="${round(y)}" width="${round(bw)}"` +
-          // A year with contributions always gets a visible stub, so the quiet
-          // decade before the ramp reads as small rather than as missing. A
-          // year with none stays empty, which is the honest shape.
-          ` height="${round(Math.max(h, v > 0 ? 3 : 0))}" rx="2" fill="${barFill(v, mx)}"` +
-          anim('bar', delay, `transform-origin:${round(cx)}px ${baseline}px`) +
-          '/>',
-        text(cx, baseline + 16, label(key), {
-          size: 9,
-          fill: t.faint,
-          anchor: 'middle',
-          cls: 'fade',
-          delay: delay + 0.04,
-        }),
-      ];
-      // Only label bars with room for it, which is what makes the recent
-      // years read as the point of the chart.
-      if (valueLabel(v, mx)) {
-        out.push(
-          text(cx, round(y) - 6, num(v), {
-            size: 9,
-            weight: 600,
-            fill: t.muted,
-            anchor: 'middle',
-            cls: 'fade',
-            delay: delay + 0.06,
-          })
-        );
-      }
-      return out;
-    });
-  };
+  const now = new Date();
+  const thisYear = now.getUTCFullYear();
+  // Newest first, so 2026 is the top row and the reader meets the current year
+  // before its predecessor.
+  const shown = [];
+  for (let y = thisYear; y > thisYear - GROWTH_YEARS; y--) shown.push([y, byYear.get(y) || 0]);
 
-  const totalAll = [...byWeekday].reduce((a, b) => a + b, 0) || 1;
+  // The current year is only partly run, so its bar is measured against a
+  // whole one. The remainder is drawn as a faint pace marker rather than left
+  // out, which is the only honest way to put a part-year beside a full one.
+  const dayOfYear =
+    Math.floor((Date.UTC(thisYear, now.getUTCMonth(), now.getUTCDate()) - Date.UTC(thisYear, 0, 1)) / 86400000) + 1;
+  const yearLen = (thisYear % 4 === 0 && thisYear % 100 !== 0) || thisYear % 400 === 0 ? 366 : 365;
+  const pace = Math.round(((byYear.get(thisYear) || 0) / dayOfYear) * yearLen);
+
+  const growthMax = Math.max(1, pace, ...shown.map((s) => s[1]));
+  const trackX = L + 44;
+  const trackW = panelW - 44;
+  const rowH = 26;
+  const gap = 18;
+
+  const growth = shown.flatMap(([year, v], i) => {
+    const y = top + 6 + i * (rowH + gap);
+    const w = (v / growthMax) * trackW;
+    const delay = 0.12 + i * 0.08;
+    const out = [
+      text(L, y + rowH / 2 + 4, String(year), {
+        size: D.type.label,
+        weight: 600,
+        fill: year === thisYear ? t.text : t.muted,
+        cls: 'fade',
+        delay,
+      }),
+      // The empty track carries the eye to the end of the axis, so a short bar
+      // reads as "less of the same scale" rather than as a truncated one.
+      `  <rect x="${round(trackX)}" y="${round(y)}" width="${round(trackW)}"` +
+        ` height="${rowH}" rx="${rowH / 2}" fill="${t.track}"/>`,
+    ];
+
+    if (year === thisYear && pace > v) {
+      out.push(
+        `  <rect x="${round(trackX)}" y="${round(y)}" width="${round((pace / growthMax) * trackW)}"` +
+          ` height="${rowH}" rx="${rowH / 2}" fill="none" stroke="${t.accent}"` +
+          ` stroke-opacity="0.45" stroke-width="1" stroke-dasharray="3 3"` +
+          anim('fade', delay + 0.3) +
+          '/>'
+      );
+    }
+
+    out.push(
+      `  <rect x="${round(trackX)}" y="${round(y)}" width="${round(Math.max(w, v > 0 ? rowH : 0))}"` +
+        ` height="${rowH}" rx="${rowH / 2}" fill="${barFill(v, growthMax)}"` +
+        anim('grow', delay, `transform-origin:${round(trackX)}px ${round(y + rowH / 2)}px`) +
+        '/>'
+    );
+
+    // Inside the bar when it is long enough to hold the figure, just past its
+    // end when it is not -- so the number never straddles the edge.
+    const inside = w > 64;
+    out.push(
+      text(inside ? trackX + w - 10 : trackX + Math.max(w, rowH) + 10, y + rowH / 2 + 4, comma(v), {
+        size: D.type.label,
+        weight: 600,
+        fill: inside ? inkOn(barFill(v, growthMax)) : t.muted,
+        anchor: inside ? 'end' : 'start',
+        tabular: true,
+        cls: 'fade',
+        delay: delay + 0.18,
+      })
+    );
+    return out;
+  });
+
+  const last = byYear.get(thisYear - 1) || 0;
+  const delta = last ? Math.round((pace / last - 1) * 100) : null;
+  const growthSub =
+    `${dayOfYear} days in · on pace for ${comma(pace)}` +
+    (delta === null ? '' : ` · ${delta >= 0 ? '+' : ''}${delta}% vs ${thisYear - 1}`);
+
+  /* ---- right: the weekday habit, unchanged ---- */
+
+  const dowMax = Math.max(1, ...byWeekday);
+  const slot = panelW / 7;
+  const bw = Math.min(slot * 0.62, 40);
+  const weekly = byWeekday.flatMap((v, i) => {
+    const cx = R + slot * i + slot / 2;
+    const h = (v / dowMax) * plotH;
+    const y = baseline - h;
+    const delay = 0.12 + i * 0.04;
+    return [
+      `  <rect x="${round(cx - bw / 2)}" y="${round(y)}" width="${round(bw)}"` +
+        ` height="${round(Math.max(h, v > 0 ? 3 : 0))}" rx="2" fill="${barFill(v, dowMax)}"` +
+        anim('bar', delay, `transform-origin:${round(cx)}px ${baseline}px`) +
+        '/>',
+      text(cx, baseline + 16, DOW[i], {
+        size: 9,
+        fill: t.faint,
+        anchor: 'middle',
+        cls: 'fade',
+        delay: delay + 0.04,
+      }),
+      text(cx, round(y) - 6, num(v), {
+        size: 9,
+        weight: 600,
+        fill: t.muted,
+        anchor: 'middle',
+        cls: 'fade',
+        delay: delay + 0.06,
+      }),
+    ];
+  });
+
+  const totalAll = byWeekday.reduce((a, b) => a + b, 0) || 1;
   const weekend = byWeekday[0] + byWeekday[6];
-  const peakDay = byWeekday.indexOf(Math.max(...byWeekday));
-  const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const peakDay = byWeekday.indexOf(dowMax);
 
   const body = [
     `  <line x1="${mid}" y1="${D.head - 34}" x2="${mid}" y2="${H - 24}" stroke="${t.hairline}" stroke-opacity="${t.softOpacity}"/>`,
-    `  <line x1="${L}" y1="${baseline}" x2="${L + panelW}" y2="${baseline}" stroke="${t.hairline}" stroke-opacity="${t.softOpacity}"/>`,
     `  <line x1="${R}" y1="${baseline}" x2="${R + panelW}" y2="${baseline}" stroke="${t.hairline}" stroke-opacity="${t.softOpacity}"/>`,
-    ...bars(
-      span,
-      L,
-      (y) => `'${String(y).slice(2)}`,
-      (v, mx) => v / mx > 0.18
-    ),
-    ...bars(
-      byWeekday.map((v, i) => [i, v]),
-      R,
-      (i) => DOW[i],
-      () => true
-    ),
+    ...growth,
+    ...weekly,
   ].join('\n');
 
   return card(H, t, {
     panels: [
-      {
-        x: L,
-        title: 'Contribution Growth',
-        subtitle: `${firstYear} - ${years.at(-1)} · ${comma(data.totals.contributions)} total`,
-      },
+      { x: L, title: 'Contribution Growth', subtitle: growthSub },
       {
         x: R,
         title: 'Weekly Rhythm',
@@ -922,6 +1266,440 @@ function rhythmCard(data, t) {
       },
     ],
     body,
+  });
+}
+
+/* ------------------------------------------------- languages & frameworks */
+
+/**
+ * The whole language ranking, not just the head of it that fits on the
+ * overview card. The stacked bar is every language at once; the grid names the
+ * top 18 with both its share of bytes and how many repositories it appears in,
+ * because those two say different things -- Python is a third of the bytes in
+ * 39 repos, Shell is a rounding error spread across 36.
+ */
+function languagesCard(data, t) {
+  const langs = data.languages;
+  const inner = D.w - D.pad * 2;
+  const barY = 76;
+  const GRID_ROWS = 6;
+  const GRID_COLS = 3;
+  const shown = langs.slice(0, GRID_ROWS * GRID_COLS);
+  const rest = langs.slice(shown.length);
+  const H = barY + 34 + GRID_ROWS * 22 + (rest.length ? 34 : 12);
+
+  // One ramp across the whole ranking, flattening out in the tail so the long
+  // list of sub-1% languages does not fade to invisible.
+  const rampAt = (i) => t.shadeAt(1 - Math.min(i, 15) / 15 * 0.82);
+
+  let offset = 0;
+  const segments = langs.map((l, i) => {
+    const w = (l.percent / 100) * inner;
+    const seg =
+      `  <rect x="${round(D.pad + offset)}" y="${barY}"` +
+      ` width="${round(Math.max(w - 0.5, 0.4))}" height="10" fill="${rampAt(i)}"/>`;
+    offset += w;
+    return seg;
+  });
+
+  const colW = inner / GRID_COLS;
+  const legend = shown.flatMap((l, i) => {
+    const x = D.pad + (i % GRID_COLS) * colW;
+    const y = barY + 46 + Math.floor(i / GRID_COLS) * 22;
+    const d = 0.2 + i * 0.025;
+    return [
+      `  <circle cx="${round(x + 5)}" cy="${round(y - 4)}" r="5" fill="${rampAt(i)}"${anim('fade', d)}/>`,
+      text(x + 17, y, l.name, {
+        size: D.type.label,
+        weight: 500,
+        fill: t.text,
+        cls: 'fade',
+        delay: d,
+      }),
+      // Right-aligned to a fixed column so proportional glyphs cannot push the
+      // figures into the name.
+      text(x + colW - 16, y, `${l.percent < 0.1 ? '<0.1' : l.percent}% · ${l.repos}×`, {
+        size: D.type.caption,
+        fill: t.muted,
+        anchor: 'end',
+        cls: 'fade',
+        delay: d + 0.03,
+      }),
+    ];
+  });
+
+  // The tail, named rather than counted: "+18 more" tells you nothing, the
+  // names tell you Ruby is in there at 0.05% and not worth a legend row.
+  const tail = [];
+  if (rest.length) {
+    let line = '';
+    for (const l of rest) {
+      const next = line ? `${line}, ${l.name}` : l.name;
+      if (next.length > 132) {
+        line = `${line}, +${rest.length - line.split(', ').length} more`;
+        break;
+      }
+      line = next;
+    }
+    tail.push(
+      text(D.pad, H - 16, `Also: ${line}`, {
+        size: D.type.caption,
+        fill: t.faint,
+        cls: 'fade',
+        delay: 0.7,
+      })
+    );
+  }
+
+  const mb = data.langBytes / 1e6;
+
+  return card(H, t, {
+    title: 'All Languages',
+    subtitle:
+      `${langs.length} languages · ${mb >= 10 ? Math.round(mb) : round(mb)} MB across ` +
+      `${data.repoCount} repositories · % of bytes, × = repositories using it`,
+    css: `\n      .grow-bar { animation: grow 620ms ${EASE} 120ms both; }`,
+    body: [
+      `  <mask id="langbar"><rect x="${D.pad}" y="${barY}" width="${inner}" height="10" rx="5" fill="#fff"/></mask>`,
+      `  <g mask="url(#langbar)"${anim('grow-bar', 0, `transform-origin:${D.pad}px ${barY + 5}px`)}>`,
+      `  <rect x="${D.pad}" y="${barY}" width="${inner}" height="10" fill="${t.track}"/>`,
+      ...segments,
+      '  </g>',
+      ...legend,
+      ...tail,
+    ].join('\n'),
+  });
+}
+
+/**
+ * Squarified treemap (Bruls, Huizing & van Wijk). Lays items out largest-first
+ * into rows chosen to keep every rectangle as close to square as it can, which
+ * is what makes the areas comparable by eye.
+ */
+function squarify(items, x0, y0, w0, h0) {
+  const total = items.reduce((a, i) => a + i.value, 0) || 1;
+  const scale = (w0 * h0) / total;
+  const queue = items.map((i) => ({ ...i, area: i.value * scale }));
+
+  let [x, y, w, h] = [x0, y0, w0, h0];
+  const placed = [];
+
+  /** Aspect ratio of the worst rectangle in `row` if laid along `len`. */
+  const worst = (row, len) => {
+    const sum = row.reduce((a, r) => a + r.area, 0);
+    if (sum <= 0 || len <= 0) return Infinity;
+    const max = Math.max(...row.map((r) => r.area));
+    const min = Math.min(...row.map((r) => r.area));
+    return Math.max((len * len * max) / (sum * sum), (sum * sum) / (len * len * min));
+  };
+
+  const flush = (row) => {
+    const sum = row.reduce((a, r) => a + r.area, 0);
+    if (sum <= 0) return;
+    if (w >= h) {
+      // The short side is the height, so the row becomes a column.
+      const colW = Math.min(sum / h, w);
+      let cy = y;
+      for (const it of row) {
+        const ih = it.area / colW;
+        placed.push({ ...it, x, y: cy, w: colW, h: ih });
+        cy += ih;
+      }
+      x += colW;
+      w -= colW;
+    } else {
+      const rowH = Math.min(sum / w, h);
+      let cx = x;
+      for (const it of row) {
+        const iw = it.area / rowH;
+        placed.push({ ...it, x: cx, y, w: iw, h: rowH });
+        cx += iw;
+      }
+      y += rowH;
+      h -= rowH;
+    }
+  };
+
+  let row = [];
+  for (const it of queue) {
+    const len = Math.min(w, h);
+    if (row.length === 0 || worst([...row, it], len) <= worst(row, len)) {
+      row.push(it);
+    } else {
+      flush(row);
+      row = [it];
+    }
+  }
+  if (row.length) flush(row);
+  return placed;
+}
+
+/**
+ * What the code is actually built with, which no GitHub API reports: every
+ * repo's dependency manifests are read and each framework is counted once per
+ * repository. Area is that count, so the biggest box is the thing reached for
+ * most often -- and the ranking runs largest-first from the top left, the way
+ * the squarified layout emits it.
+ */
+function frameworksCard(data, t) {
+  const inner = D.w - D.pad * 2;
+  const plotY = 84;
+  const plotH = 232;
+  const H = plotY + plotH + 40;
+  const GAP = 3;
+  const SHOWN = 14; // fewer, larger boxes -- an unlabelled tile says nothing
+
+  const top = data.frameworks.slice(0, SHOWN);
+
+  if (!top.length) {
+    return card(plotY + 60, t, {
+      title: 'Frameworks & Tooling',
+      subtitle: 'No dependency manifests found',
+      body: text(D.pad, plotY + 20, 'Nothing to show yet.', { size: D.type.label, fill: t.faint }),
+    });
+  }
+
+  const boxes = squarify(
+    top.map((f) => ({ ...f, value: f.repos })),
+    D.pad,
+    plotY,
+    inner,
+    plotH
+  );
+
+  const n = boxes.length;
+  const cells = boxes.flatMap((b, i) => {
+    const fill = t.shadeAt(1 - (i / Math.max(1, n - 1)) * 0.8);
+    const ink = inkOn(fill);
+    const w = Math.max(0, b.w - GAP);
+    const h = Math.max(0, b.h - GAP);
+    const r = Math.min(10, w / 3, h / 3);
+    const out = [
+      `  <rect x="${round(b.x)}" y="${round(b.y)}" width="${round(w)}" height="${round(h)}"` +
+        ` rx="${round(Math.max(r, 0))}" fill="${fill}"${anim('rise', 0.1 + i * 0.035)}/>`,
+    ];
+    // Labels only where they fit whole; a clipped framework name is worse than
+    // no name, and the legend-free layout depends on every visible word being
+    // complete. Three tiers, so a small tile still carries its name at a
+    // smaller size instead of degrading to a bare number.
+    const d = 0.3 + i * 0.035;
+    if (h >= 36 && b.name.length * 6.2 + 18 < w) {
+      out.push(
+        text(b.x + 9, b.y + 20, b.name, { size: 11, weight: 600, fill: ink, cls: 'fade', delay: d }),
+        text(b.x + 9, b.y + 35, `${b.repos} repos`, {
+          size: 9,
+          fill: ink,
+          cls: 'fade',
+          delay: d + 0.04,
+        })
+      );
+    } else if (h >= 20 && b.name.length * 5.1 + 12 < w) {
+      out.push(
+        text(b.x + w / 2, b.y + h / 2 + 1, b.name, {
+          size: 9,
+          weight: 600,
+          fill: ink,
+          anchor: 'middle',
+          cls: 'fade',
+          delay: d,
+        }),
+        h >= 32
+          ? text(b.x + w / 2, b.y + h / 2 + 13, String(b.repos), {
+              size: 8.5,
+              fill: ink,
+              anchor: 'middle',
+              tabular: true,
+              cls: 'fade',
+              delay: d + 0.04,
+            })
+          : null
+      );
+    } else if (h >= 16 && w >= 24) {
+      out.push(
+        text(b.x + w / 2, b.y + h / 2 + 3.5, String(b.repos), {
+          size: 10,
+          weight: 600,
+          fill: ink,
+          anchor: 'middle',
+          tabular: true,
+          cls: 'fade',
+          delay: d,
+        })
+      );
+    }
+    return out.filter(Boolean);
+  });
+
+  const hidden = data.frameworks.slice(SHOWN);
+  const footer = hidden.length
+    ? text(D.pad, H - 16, `Also: ${hidden.slice(0, 12).map((f) => f.name).join(', ')}` +
+        (hidden.length > 12 ? `, +${hidden.length - 12} more` : ''), {
+        size: D.type.caption,
+        fill: t.faint,
+        cls: 'fade',
+        delay: 0.9,
+      })
+    : null;
+
+  return card(H, t, {
+    title: 'Frameworks & Tooling',
+    subtitle:
+      `${data.frameworks.length} detected · box area = repositories that depend on it · ` +
+      `read from each repo's dependency manifests`,
+    body: [...cells, footer].filter(Boolean).join('\n'),
+  });
+}
+
+/* ------------------------------------------------------ year clock calendar */
+
+/**
+ * The contribution year as a dial rather than a grid. GitHub already draws the
+ * grid on the profile page directly above these cards, so repeating it adds
+ * nothing; a clock face does something the grid cannot, which is show a whole
+ * year as one closed shape you can compare against the year beside it.
+ *
+ * January sits at 12 o'clock and the year runs clockwise, one spoke per day:
+ * length and shade both carry the day's count. The current year's dial stops
+ * at today, so the gap in the ring is the rest of the year still to come.
+ */
+function clockCalendar(data, t) {
+  const R_HUB = 52;
+  const R_MAX = 72; // longest spoke, measured outward from the hub
+  const R_OUT = R_HUB + R_MAX;
+  const R_LABEL = R_OUT + 16;
+  const BOX = R_LABEL + 14;
+
+  const dialTop = D.head + 10;
+  const cy = dialTop + BOX;
+  const H = cy + BOX + 46;
+
+  const now = new Date();
+  const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const thisYear = now.getUTCFullYear();
+  const years = [thisYear, thisYear - 1];
+
+  const pt = (cx, r, deg) => {
+    const rad = ((deg - 90) * Math.PI) / 180;
+    return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
+  };
+
+  // One scale across both dials, so a longer spoke always means a busier day
+  // no matter which year it is in.
+  let peak = 1;
+  const perYear = years.map((year) => {
+    const len = ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0 ? 366 : 365);
+    const counts = [];
+    for (let i = 0; i < len; i++) {
+      const ms = Date.UTC(year, 0, 1) + i * 86400000;
+      counts.push(ms > todayUTC ? null : data.days.get(iso(new Date(ms))) || 0);
+    }
+    peak = Math.max(peak, ...counts.filter((c) => c !== null));
+    return { year, len, counts };
+  });
+
+  const level = (c) => (c === 0 ? 0 : Math.min(4, Math.ceil((c / peak) * 4)));
+  // A power curve, so a single-contribution day is still visible next to a
+  // three-figure spike without the spike leaving the card.
+  const lenOf = (c) => (c === 0 ? 4 : 4 + (c / peak) ** 0.55 * (R_MAX - 4));
+
+  const dials = perYear.flatMap(({ year, len, counts }, panel) => {
+    const cx = D.w / 4 + (D.w / 2) * panel;
+    const active = counts.filter((c) => c).length;
+    const total = counts.reduce((a, c) => a + (c || 0), 0);
+    const yearPeak = Math.max(0, ...counts.map((c) => c || 0));
+
+    // 731 spokes carrying their own stroke would be a 70KB file for what is
+    // five distinct colours, so they are bucketed by level and the colour is
+    // hoisted onto one group per bucket -- same drawing, a third of the bytes.
+    const buckets = t.levels.map(() => []);
+    for (let i = 0; i < counts.length; i++) {
+      const c = counts[i];
+      if (c === null) continue;
+      const deg = (i / len) * 360;
+      const [x1, y1] = pt(cx, R_HUB, deg);
+      const [x2, y2] = pt(cx, R_HUB + lenOf(c), deg);
+      const d1 = (n) => Math.round(n * 10) / 10;
+      buckets[level(c)].push(
+        `<line x1="${d1(x1)}" y1="${d1(y1)}" x2="${d1(x2)}" y2="${d1(y2)}"/>`
+      );
+    }
+    const spokes = buckets
+      .map((lines, lv) =>
+        lines.length
+          ? `    <g stroke="${t.levels[lv]}" stroke-width="1.8">${lines.join('')}</g>`
+          : null
+      )
+      .filter(Boolean);
+
+    const ticks = MONTHS.flatMap((name, m) => {
+      const boundary = (Date.UTC(year, m, 1) - Date.UTC(year, 0, 1)) / 86400000 / len;
+      const midDeg = (boundary + (Date.UTC(year, m + 1, 1) - Date.UTC(year, m, 1)) / 86400000 / len / 2) * 360;
+      const [tx1, ty1] = pt(cx, R_OUT + 3, boundary * 360);
+      const [tx2, ty2] = pt(cx, R_OUT + 8, boundary * 360);
+      const [lx, ly] = pt(cx, R_LABEL, midDeg);
+      return [
+        `    <line x1="${round(tx1)}" y1="${round(ty1)}" x2="${round(tx2)}" y2="${round(ty2)}"` +
+          ` stroke="${t.hairline}" stroke-opacity="${t.hairlineOpacity}"/>`,
+        text(lx, ly + 3.2, name, { size: 8.5, fill: t.faint, anchor: 'middle', track: 0 }),
+      ];
+    });
+
+    return [
+      `  <g${anim('fade', 0.1 + panel * 0.12)}>`,
+      // The hub rim closes the dial, so the missing spokes of an unfinished
+      // year read as "not yet" rather than as a broken drawing.
+      `    <circle cx="${round(cx)}" cy="${cy}" r="${R_HUB}" fill="none" stroke="${t.hairline}" stroke-opacity="${t.hairlineOpacity}"/>`,
+      `    <circle cx="${round(cx)}" cy="${cy}" r="${R_OUT}" fill="none" stroke="${t.hairline}" stroke-opacity="${t.softOpacity}"/>`,
+      ...spokes,
+      ...ticks,
+      text(cx, cy - 2, String(year), {
+        size: D.type.big,
+        weight: 700,
+        fill: t.text,
+        anchor: 'middle',
+        track: TRACK.stat,
+        tabular: true,
+      }),
+      text(cx, cy + 16, comma(total), {
+        size: D.type.label,
+        weight: 600,
+        fill: t.muted,
+        anchor: 'middle',
+        tabular: true,
+      }),
+      text(cx, cy + BOX - 2, `${active} active days · peak ${yearPeak} in a day`, {
+        size: D.type.caption,
+        fill: t.faint,
+        anchor: 'middle',
+      }),
+      '  </g>',
+    ];
+  });
+
+  const swatchEnd = D.w - D.pad - 34;
+  const swatchStart = swatchEnd - (t.levels.length * 15 - 4);
+  const legend = t.levels.map(
+    (c, i) =>
+      `  <rect x="${round(swatchStart + i * 15)}" y="${H - 33}" width="11" height="11" rx="2" fill="${c}"${anim('fade', 1.1 + i * 0.05)}/>`
+  );
+
+  const total = perYear.reduce((a, y) => a + y.counts.reduce((s, c) => s + (c || 0), 0), 0);
+
+  return card(H, t, {
+    title: 'Contribution Year Clock',
+    subtitle: `Jan at 12 o'clock, one spoke per day · ${comma(total)} contributions across ${years.at(-1)}-${years[0]}`,
+    body: [
+      ...dials,
+      text(swatchStart - 6, H - 24, 'Less', {
+        size: 9,
+        fill: t.faint,
+        anchor: 'end',
+        cls: 'fade',
+        delay: 1.1,
+      }),
+      ...legend,
+      text(swatchEnd + 6, H - 24, 'More', { size: 9, fill: t.faint, cls: 'fade', delay: 1.35 }),
+    ].join('\n'),
   });
 }
 
@@ -933,6 +1711,9 @@ function rhythmCard(data, t) {
  * transform and painted back-to-front.
  */
 function calendarCard(data, t) {
+  // The dial is the default; the isometric grid and the skyline stay reachable
+  // through CALENDAR_STYLE for anyone who wants them back.
+  if (CALENDAR_STYLE === 'clock') return clockCalendar(data, t);
   const CITY = CALENDAR_STYLE === 'city';
   const HW = 13; // half width of a tile diamond
   const HH = 4.5; // half height; flatter than a true 2:1 isometric so the
@@ -1122,10 +1903,19 @@ function calendarCard(data, t) {
 const data = await fetchStats();
 await mkdir(OUT_DIR, { recursive: true });
 
+/**
+ * Declaration order is README order, and it runs most-signal-first: who this
+ * is and the headline numbers, then the two cards that answer "is this person
+ * active right now", then the two that answer "what do they build with", then
+ * the slower-moving shape of the year. The tallest and most decorative card is
+ * last, where its height costs a reader nothing.
+ */
 const cards = {
   overview: overviewCard,
   streak: streakCard,
   activity: activityCard,
+  frameworks: frameworksCard,
+  languages: languagesCard,
   rhythm: rhythmCard,
   calendar: calendarCard,
 };

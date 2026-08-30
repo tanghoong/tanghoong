@@ -33,7 +33,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           USERNAME: ${{ github.repository_owner }}
           CARD_TITLE: Charlie's Performance
-          CALENDAR_PALETTE: github
         run: node scripts/generate-cards.mjs
 
       - name: Commit & push
