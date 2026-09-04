@@ -20,20 +20,20 @@
   <mask id="langbar"><rect x="24" y="76" width="832" height="10" rx="5" fill="#fff"/></mask>
   <g mask="url(#langbar)" class="grow-bar" style="transform-origin:24px 81px">
   <rect x="24" y="76" width="832" height="10" fill="#f5f5f7"/>
-  <rect x="24" y="76" width="259.08" height="10" fill="#03724d"/>
-  <rect x="283.58" y="76" width="194.19" height="10" fill="#058157"/>
-  <rect x="478.27" y="76" width="134.2" height="10" fill="#068f61"/>
-  <rect x="612.97" y="76" width="114.9" height="10" fill="#099c6b"/>
-  <rect x="728.37" y="76" width="44.1" height="10" fill="#0baa75"/>
-  <rect x="772.97" y="76" width="23.46" height="10" fill="#0eb77e"/>
-  <rect x="796.93" y="76" width="17.8" height="10" fill="#11c388"/>
-  <rect x="815.23" y="76" width="17.14" height="10" fill="#15d092"/>
-  <rect x="832.87" y="76" width="4.41" height="10" fill="#18dc9b"/>
-  <rect x="837.78" y="76" width="2.33" height="10" fill="#20e4a3"/>
-  <rect x="840.61" y="76" width="2.25" height="10" fill="#31e3a8"/>
-  <rect x="843.35" y="76" width="1.83" height="10" fill="#41e3ad"/>
-  <rect x="845.68" y="76" width="1.75" height="10" fill="#51e3b2"/>
-  <rect x="847.93" y="76" width="0.75" height="10" fill="#60e4b8"/>
+  <rect x="24" y="76" width="258.67" height="10" fill="#03724d"/>
+  <rect x="283.17" y="76" width="194.02" height="10" fill="#058157"/>
+  <rect x="477.69" y="76" width="134.03" height="10" fill="#068f61"/>
+  <rect x="612.22" y="76" width="114.73" height="10" fill="#099c6b"/>
+  <rect x="727.46" y="76" width="44.26" height="10" fill="#0baa75"/>
+  <rect x="772.22" y="76" width="23.46" height="10" fill="#0eb77e"/>
+  <rect x="796.18" y="76" width="17.8" height="10" fill="#11c388"/>
+  <rect x="814.48" y="76" width="17.14" height="10" fill="#15d092"/>
+  <rect x="832.12" y="76" width="4.41" height="10" fill="#18dc9b"/>
+  <rect x="837.03" y="76" width="3.16" height="10" fill="#20e4a3"/>
+  <rect x="840.69" y="76" width="2.25" height="10" fill="#31e3a8"/>
+  <rect x="843.44" y="76" width="1.83" height="10" fill="#41e3ad"/>
+  <rect x="845.77" y="76" width="1.75" height="10" fill="#51e3b2"/>
+  <rect x="848.01" y="76" width="0.66" height="10" fill="#60e4b8"/>
   <rect x="849.18" y="76" width="0.66" height="10" fill="#6fe5bd"/>
   <rect x="850.34" y="76" width="0.4" height="10" fill="#7ee6c3"/>
   <rect x="851.17" y="76" width="0.4" height="10" fill="#7ee6c3"/>
@@ -59,19 +59,19 @@
   </g>
   <circle cx="29" cy="118" r="5" fill="#03724d" class="fade" style="animation-delay:0.2s"/>
   <text x="41" y="122" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="12" font-weight="500" fill="#1d1d1f" letter-spacing="-0.07" class="fade" style="animation-delay:0.2s">Python</text>
-  <text x="285.33" y="122" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.23s">31.2% · 44×</text>
+  <text x="285.33" y="122" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.23s">31.15% · 44×</text>
   <circle cx="306.33" cy="118" r="5" fill="#058157" class="fade" style="animation-delay:0.23s"/>
   <text x="318.33" y="122" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="12" font-weight="500" fill="#1d1d1f" letter-spacing="-0.07" class="fade" style="animation-delay:0.23s">TypeScript</text>
-  <text x="562.67" y="122" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.26s">23.4% · 149×</text>
+  <text x="562.67" y="122" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.26s">23.38% · 149×</text>
   <circle cx="583.67" cy="118" r="5" fill="#068f61" class="fade" style="animation-delay:0.25s"/>
   <text x="595.67" y="122" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="12" font-weight="500" fill="#1d1d1f" letter-spacing="-0.07" class="fade" style="animation-delay:0.25s">PHP</text>
-  <text x="840" y="122" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.28s">16.19% · 33×</text>
+  <text x="840" y="122" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.28s">16.17% · 33×</text>
   <circle cx="29" cy="140" r="5" fill="#099c6b" class="fade" style="animation-delay:0.28s"/>
   <text x="41" y="144" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="12" font-weight="500" fill="#1d1d1f" letter-spacing="-0.07" class="fade" style="animation-delay:0.28s">HTML</text>
-  <text x="285.33" y="144" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.31s">13.87% · 184×</text>
+  <text x="285.33" y="144" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.31s">13.85% · 184×</text>
   <circle cx="306.33" cy="140" r="5" fill="#0baa75" class="fade" style="animation-delay:0.3s"/>
   <text x="318.33" y="144" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="12" font-weight="500" fill="#1d1d1f" letter-spacing="-0.07" class="fade" style="animation-delay:0.3s">JavaScript</text>
-  <text x="562.67" y="144" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.33s">5.36% · 195×</text>
+  <text x="562.67" y="144" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.33s">5.38% · 195×</text>
   <circle cx="583.67" cy="140" r="5" fill="#0eb77e" class="fade" style="animation-delay:0.33s"/>
   <text x="595.67" y="144" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="12" font-weight="500" fill="#1d1d1f" letter-spacing="-0.07" class="fade" style="animation-delay:0.33s">CSS</text>
   <text x="840" y="144" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.36s">2.88% · 191×</text>
@@ -86,7 +86,7 @@
   <text x="840" y="166" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.43s">0.59% · 4×</text>
   <circle cx="29" cy="184" r="5" fill="#20e4a3" class="fade" style="animation-delay:0.43s"/>
   <text x="41" y="188" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="12" font-weight="500" fill="#1d1d1f" letter-spacing="-0.07" class="fade" style="animation-delay:0.43s">Astro</text>
-  <text x="285.33" y="188" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.46s">0.34% · 7×</text>
+  <text x="285.33" y="188" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.46s">0.44% · 7×</text>
   <circle cx="306.33" cy="184" r="5" fill="#31e3a8" class="fade" style="animation-delay:0.45s"/>
   <text x="318.33" y="188" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="12" font-weight="500" fill="#1d1d1f" letter-spacing="-0.07" class="fade" style="animation-delay:0.45s">Shell</text>
   <text x="562.67" y="188" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.48s">0.33% · 38×</text>
@@ -98,7 +98,7 @@
   <text x="285.33" y="210" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.53s">0.27% · 1×</text>
   <circle cx="306.33" cy="206" r="5" fill="#60e4b8" class="fade" style="animation-delay:0.53s"/>
   <text x="318.33" y="210" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="12" font-weight="500" fill="#1d1d1f" letter-spacing="-0.07" class="fade" style="animation-delay:0.53s">PowerShell</text>
-  <text x="562.67" y="210" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.56s">0.15% · 18×</text>
+  <text x="562.67" y="210" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.56s">0.14% · 18×</text>
   <circle cx="583.67" cy="206" r="5" fill="#6fe5bd" class="fade" style="animation-delay:0.55s"/>
   <text x="595.67" y="210" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="12" font-weight="500" fill="#1d1d1f" letter-spacing="-0.07" class="fade" style="animation-delay:0.55s">C</text>
   <text x="840" y="210" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif" font-size="10" font-weight="400" fill="#515154" text-anchor="end" letter-spacing="-0.06" class="fade" style="animation-delay:0.58s">0.14% · 3×</text>
