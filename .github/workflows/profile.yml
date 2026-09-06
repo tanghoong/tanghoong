@@ -28,6 +28,13 @@ jobs:
         with:
           node-version: 22
 
+      # The ramp is generated, not written down, so nothing else would notice
+      # if someone "tidied" the OKLab matrices. Six samples must still land on
+      # tokens.css's --c-1..--c-6 exactly. Cheap, and it fails before the cards
+      # are built rather than after they are pushed.
+      - name: Verify the chart ramp
+        run: node scripts/ramp.mjs --check
+
       - name: Generate profile cards
         env:
           # 🔴 The default GITHUB_TOKEN is an installation token scoped to THIS

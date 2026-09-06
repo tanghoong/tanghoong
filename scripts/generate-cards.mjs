@@ -21,6 +21,8 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { ENDPOINTS, ramp, sampleAt } from './ramp.mjs';
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = join(ROOT, 'assets');
 
@@ -61,36 +63,6 @@ const D = {
 /** Tracking from §3.3, in ems -- applied against each element's own size. */
 const TRACK = { title: -0.014, body: -0.006, stat: -0.03, eyebrow: 0.07 };
 
-const hslToHex = (h, s, l) => {
-  const a = (s / 100) * Math.min(l / 100, 1 - l / 100);
-  const f = (n) => {
-    const k = (n + h / 30) % 12;
-    const v = l / 100 - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
-    return Math.round(255 * v)
-      .toString(16)
-      .padStart(2, '0');
-  };
-  return `#${f(0)}${f(8)}${f(4)}`;
-};
-
-/**
- * §2: there is exactly ONE accent, and it is green. Every data mark on every
- * card -- the ring, the activity area, the language bar and the calendar -- is
- * a shade of it, generated here rather than hand-picked.
- *
- * The doc is explicit that a palette of six colours is what makes a page look
- * like a bootcamp project, so the language bar uses this ramp too instead of
- * GitHub's per-language identity colours.
- *
- * `t` runs 0 (weakest) to 1 (the accent itself). Light and dark move in
- * opposite directions because the accent is deliberately asymmetric: a deep
- * green carries on white, a vivid green carries on black.
- */
-const SCALES = {
-  green: { light: [160, 95, 23], dark: [146, 100, 65] },
-  blue: { light: [212, 92, 43], dark: [212, 96, 66] },
-};
-
 /**
  * A down week is drawn in grey, not red, so §2's single-accent rule holds
  * across the whole profile with no exception to police.
@@ -111,34 +83,79 @@ const QUIET = {
   dark: { fill: '#3f3f44', edge: '#6e6e73' },
 };
 
-/** Ink that stays legible on an arbitrary fill -- used by the treemap. */
-const inkOn = (hex) => {
+const luminance = (hex) => {
   const n = parseInt(hex.slice(1), 16);
   const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
     const c = v / 255;
     return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
   });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.42 ? '#0a0a0c' : '#ffffff';
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 };
 
+const contrast = (a, b) => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+
+/**
+ * Ink that stays legible on an arbitrary ramp fill -- the treemap tiles and
+ * the growth bars that print their figure inside the bar.
+ *
+ * 🔴 Measure, do not threshold. This was `luminance > 0.42 ? dark : white`,
+ * which is the mistake the design system calls out by name: as the ramp
+ * lightens the ink has to flip, and a fixed cut-off puts the flip in the wrong
+ * place. Against the 10-sample ramp that heuristic bottomed out at 2.25:1 --
+ * #5abf9a took white ink at 2.2:1 and #32c471 took dark at 2.3:1, both of them
+ * unreadable, both of them "passing" because nothing checked. Asking which of
+ * the two inks actually wins lands the flip where it belongs and holds the
+ * worst case at 4.40:1 across 6, 10 and 16 samples, in both themes.
+ *
+ * The two candidates are the system's own --accent-ink pair, not black/white.
+ */
+const inkOn = (hex) =>
+  contrast(hex, '#04140b') >= contrast(hex, '#ffffff') ? '#04140b' : '#ffffff';
+
+/**
+ * §2: there is exactly ONE accent, and it is green. Every data mark on every
+ * card -- the ring, the activity area, the language bar and the calendar -- is
+ * a shade of it, sampled from the ramp rather than hand-picked. The doc is
+ * explicit that a palette of six colours is what makes a page look like a
+ * bootcamp project, so the language bar uses this ramp too rather than
+ * GitHub's per-language identity colours.
+ *
+ * 🔴 The ramp is a FUNCTION, not a palette: interpolate the two endpoints and
+ * sample at however many series the card has, IN OKLAB. The endpoints and the
+ * arithmetic live in scripts/ramp.mjs, which is also the CLI the design system
+ * documents (`node scripts/ramp.mjs <n> --json`). This file only decides how
+ * many samples each card needs.
+ *
+ * Two interfaces, because cards ask two different questions:
+ *   rampAt(i, n)  a CATEGORY -- series i of n. Index 0 is the largest and IS
+ *                 the accent; index n-1 is the tail. Even steps by construction.
+ *   shadeAt(t)    an INTENSITY -- t runs 0 (tail) to 1 (the accent), for a mark
+ *                 whose colour tracks a value rather than a rank.
+ *
+ * Light and dark run in opposite directions because the accent is deliberately
+ * asymmetric: a deep green carries on white, a vivid green carries on black.
+ */
 const makeTheme = (mode, base) => {
-  const [h, s, l] = SCALES[ACCENT][mode];
+  const [from, to] = ENDPOINTS[ACCENT][mode];
   const quiet = QUIET[mode];
-  const shadeAt =
-    mode === 'light'
-      ? (t) => hslToHex(h, s - (1 - t) * 34, 80 - t * (80 - l))
-      : (t) => hslToHex(h, s - (1 - t) * 28, 20 + t * (l - 20));
+  const rampAt = (i, n) => sampleAt(from, to, n <= 1 ? 0 : Math.min(i, n - 1) / (n - 1));
+  const shadeAt = (t) => sampleAt(from, to, 1 - t);
   return {
     ...base,
-    accent: hslToHex(h, s, l),
+    accent: from,
     quiet: quiet.fill,
     quietEdge: quiet.edge,
+    rampAt,
     shadeAt,
     // Calendar intensity: index 0 is an empty day, so it stays a neutral
-    // sunken surface rather than a faint green.
-    levels: [base.sunken, shadeAt(0.25), shadeAt(0.5), shadeAt(0.75), shadeAt(1)],
+    // sunken surface rather than a faint green. The four live levels are the
+    // ramp reversed -- the busiest day is the accent, the quietest is the tail.
+    levels: [base.sunken, ...ramp(from, to, 4).reverse()],
     // Most-used language is the accent itself; each rank steps down the ramp.
-    langAt: (i, n) => shadeAt(1 - (i / Math.max(1, n - 1)) * 0.78),
+    langAt: rampAt,
   };
 };
 
@@ -1372,9 +1389,11 @@ function languagesCard(data, t) {
   const rest = langs.slice(shown.length);
   const H = barY + 34 + GRID_ROWS * 22 + (rest.length ? 34 : 12);
 
-  // One ramp across the whole ranking, flattening out in the tail so the long
-  // list of sub-1% languages does not fade to invisible.
-  const rampAt = (i) => t.shadeAt(1 - Math.min(i, 15) / 15 * 0.82);
+  // One ramp across the whole ranking. The design system samples this card at
+  // 16, from the same two endpoints as every other card. Past the 16th the
+  // ramp holds at its tail rather than running off the end -- the sub-1% list
+  // is long, and its exact rank is not what the colour is there to say.
+  const rampAt = (i) => t.rampAt(i, 16);
 
   let offset = 0;
   const segments = langs.map((l, i) => {
@@ -1596,7 +1615,7 @@ function frameworksCard(data, t) {
 
   const n = boxes.length;
   const cells = boxes.flatMap((b, i) => {
-    const fill = t.shadeAt(1 - (i / Math.max(1, n - 1)) * 0.8);
+    const fill = t.rampAt(i, n);
     const ink = inkOn(fill);
     const w = Math.max(0, b.w - GAP);
     const h = Math.max(0, b.h - GAP);

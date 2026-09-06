@@ -2,7 +2,7 @@
 kind: maintenance notes
 intent: "How the profile cards are generated, and the things that will bite whoever touches this next"
 created: "2026-08-30"
-covers: "scripts/generate-cards.mjs · .github/workflows/profile.yml · assets/*.svg"
+covers: "scripts/generate-cards.mjs · scripts/ramp.mjs · .github/workflows/profile.yml · assets/*.svg"
 ---
 
 # 04 · PROFILE CARDS
@@ -138,6 +138,9 @@ function comment so neither gets walked back into.
 
 ### 4.1 Before you ship a chart
 
+- **Take the colour from the ramp.** Never a literal, never a per-language
+  identity colour, never a second hue. `t.rampAt(i, n)` for a rank, `t.shadeAt(t)`
+  for an intensity — see §4.3.
 - **Check it in greyscale.** Render through a `grayscale(1)` filter; anything
   whose meaning lives in colour must survive with no hue at all. This is what
   caught red-vs-green at 1.15:1 — see 03-DESIGN-SYSTEM.md §2.
@@ -163,6 +166,48 @@ GITHUB_TOKEN=$(gh auth token) USERNAME=tanghoong node scripts/generate-cards.mjs
 ⚠️ Authoring note: Git Bash on Windows silently eats backslashes and backticks
 inside heredocs. Edit `.mjs` and `.md` files with an editor, not with
 `cat <<EOF` — it will corrupt regexes and code fences without erroring.
+
+⚠️ And **do not commit what you rendered locally** unless your token is the
+full-scope one. A local `gh auth token` typically sees a slice (§1.1), so the
+cards it produces are correct-looking and wrong. Preview, then
+`git checkout -- assets/` and let CI regenerate them.
+
+### 4.3 The ramp — `scripts/ramp.mjs`
+
+Every data mark is a sample of one ramp, because there is one accent. The
+endpoints are the design system's `--c-from` / `--c-to`, and the interpolation
+is **in OKLab**:
+
+| | index 0 (the accent) | the tail |
+| --- | --- | --- |
+| Light | `#03744e` | `#7ee6c3` |
+| Dark | `#4dff9b` | `#107f40` |
+
+```bash
+node scripts/ramp.mjs 10 --json     # any sample count, either theme
+node scripts/ramp.mjs --check       # six samples still equal tokens.css --c-1..--c-6
+```
+
+Two interfaces, because cards ask two different questions:
+
+| Call | Question | Used by |
+| --- | --- | --- |
+| `t.rampAt(i, n)` | **rank** — series *i* of *n* | languages (16), frameworks (n), overview bar, calendar levels |
+| `t.shadeAt(t)` | **intensity** — `t` 0 (tail) to 1 (accent) | growth bars, ability bars |
+
+🔴 This was HSL until 2026-09-06, and HSL bunches the steps at one end. The six
+dark samples began `#4dff9b #25f981 #0de26a` — three greens nobody can tell
+apart. The measurements are in 03-DESIGN-SYSTEM.md §2.2; the short version is a
+3–4× spread between the widest and narrowest step, versus 1.03× in OKLab.
+
+⛔ `inkOn()` is a **comparison, not a threshold**. It was `luminance > 0.42`,
+which put labels at 2.2:1 in the middle of the ramp. It now asks which of the
+two `--accent-ink` values wins and holds 4.40:1 at every sample count. If you
+add a card that prints a label inside a filled block, use it — do not re-derive
+a cut-off.
+
+`--check` runs in CI before the cards are built, so a well-meaning tidy-up of
+the OKLab matrices fails the workflow instead of quietly shifting every colour.
 
 ---
 

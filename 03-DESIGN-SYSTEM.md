@@ -336,6 +336,54 @@ inline script placed **before** the stylesheet, so there is no flash of the
 wrong theme. Wrapped in `try/catch`: a browser blocking storage must render the
 Auto theme correctly, not throw.
 
+### 2.2 The chart ramp is a function, not a palette
+
+There is one accent, so a chart with six series cannot have six colours — it
+has **six samples of one ramp**. Interpolate the two endpoints and sample at
+however many series the chart has:
+
+| | `--c-from` (index 0, the accent) | `--c-to` (the tail) |
+| --- | --- | --- |
+| Light | `#03744e` | `#7ee6c3` |
+| Dark | `#4dff9b` | `#107f40` |
+
+```bash
+node scripts/ramp.mjs <n> [--json]   # any sample count
+node scripts/ramp.mjs --check        # six samples still equal --c-1..--c-6
+```
+
+`--c-1..--c-6` in `tokens.css` are only the six-sample case, written out
+because CSS cannot interpolate. SVG cards are not limited to six: the overview
+samples 6, frameworks 10, languages 16 — all from the same two endpoints.
+
+🔴 **Interpolate in OKLab, never in sRGB or HSL.** HSL is the obvious choice
+and it is wrong: a linear walk through saturation and lightness produces steps
+that bunch at one end. This repo shipped that version. Measured as OKLab
+distance between neighbouring samples:
+
+| | Steps between the six samples | Spread |
+| --- | --- | --- |
+| HSL, light | `.154 .134 .052 .049 .063` | **3.1×** |
+| HSL, dark | `.036 .064 .135 .139 .136` | **3.9×** |
+| OKLab, either | `≈.072` throughout | **1.03×** |
+
+In dark the first three HSL samples were `#4dff9b #25f981 #0de26a` — three
+shades a reader cannot separate, in a chart whose only job is separating
+series. At ten samples the first four steps were `.019` each and the head of
+the treemap was one flat green.
+
+⛔ **And the ink on a filled block must be measured, not thresholded.** As the
+ramp lightens, label ink has to flip from white to dark. Deciding that with a
+fixed luminance cut-off puts the flip in the wrong place: `luminance > 0.42`
+gave `#5abf9a` white ink at **2.2:1** and `#32c471` dark ink at **2.3:1**, both
+unreadable and both silent. Ask which of the two `--accent-ink` values actually
+wins the contrast comparison and the worst case across 6, 10 and 16 samples in
+both themes becomes **4.40:1**.
+
+✅ Because the ramp is monotonic in OKLab lightness, it also passes the
+`grayscale(1)` check by construction — verified for 4, 6, 10 and 16 samples in
+both themes and both accents.
+
 ---
 
 ## 3 · Typography
