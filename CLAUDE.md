@@ -66,6 +66,9 @@ node scripts/contrast.mjs --fail  # all 40 colour checks
    regexes and code fences without erroring. §4.2.
 4. ⚠️ **The workflow commits with `git add -A .`**, so any untracked scratch
    file in the tree gets swept into the next bot commit. Keep it clean. §5.
+   If you need a staging directory that must not be committed — material being
+   prepared for another repo, say — add it to `.gitignore` rather than trusting
+   yourself to delete it before 18:00 UTC.
 
 ---
 
