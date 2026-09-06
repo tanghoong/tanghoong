@@ -28,12 +28,19 @@ jobs:
         with:
           node-version: 22
 
-      # The ramp is generated, not written down, so nothing else would notice
-      # if someone "tidied" the OKLab matrices. Six samples must still land on
-      # tokens.css's --c-1..--c-6 exactly. Cheap, and it fails before the cards
-      # are built rather than after they are pushed.
-      - name: Verify the chart ramp
+      # Colour is the one thing here that can go wrong silently: a card renders
+      # perfectly whatever the hex, and nobody reads a contrast figure twice.
+      # Both scripts are dependency-free and run in under a second, before the
+      # cards are built rather than after they are pushed.
+      #
+      #   ramp.mjs --check   six samples still equal tokens.css --c-1..--c-6
+      #   contrast.mjs       every ratio quoted in 03-DESIGN-SYSTEM.md,
+      #                      recomputed from the hex the code actually ships
+      - name: Verify the ramp
         run: node scripts/ramp.mjs --check
+
+      - name: Verify contrast, and that the documents still tell the truth
+        run: node scripts/contrast.mjs --fail
 
       - name: Generate profile cards
         env:

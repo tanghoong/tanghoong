@@ -92,6 +92,68 @@ export const oklabToHex = ([L, A, B]) => {
     .join('')}`;
 };
 
+/* -------------------------------------------------------------------------- */
+/* Measurement                                                                */
+/* -------------------------------------------------------------------------- */
+
+/** WCAG relative luminance. */
+export const luminance = (hex) => {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+    .map((v) => toLinear(v / 255))
+    .reduce((acc, c, i) => acc + c * [0.2126, 0.7152, 0.0722][i], 0);
+};
+
+/** WCAG contrast ratio, order-independent. */
+export const contrast = (a, b) => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+
+/**
+ * Perceptual distance in OKLab.
+ *
+ * WCAG contrast is a LUMINANCE ratio, which is the right question for text on
+ * a ground and the wrong one for "can I tell these two chart colours apart".
+ * Two greens can differ obviously in hue at nearly identical luminance -- the
+ * ratio says 1.03, the eye says "clearly different". For adjacent ramp steps
+ * the honest measure is this one.
+ */
+export const deltaE = (a, b) => {
+  const [x, y] = [hexToOklab(a), hexToOklab(b)];
+  return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]);
+};
+
+/**
+ * 🔴 The floor for a ramp a reader has to match back to a legend, taken from
+ * the design system's own scripts/contrast.mjs. Sample counts above six
+ * necessarily fall below it -- at 10 or 16 series every block is labelled in
+ * place and there is no legend to match against, which is why only the
+ * six-sample case is held to it.
+ */
+export const LEGEND_MIN_DELTA = 0.045;
+
+/** --accent-ink, light and dark. The only two inks a filled mark may take. */
+export const ACCENT_INK = ['#ffffff', '#04140b'];
+
+/**
+ * Ink that stays legible on an arbitrary ramp fill.
+ *
+ * 🔴 Measure, do not threshold. As the ramp lightens the ink has to flip, and
+ * a fixed luminance cut-off puts the flip in the wrong place: `> 0.42` gave
+ * #5abf9a white ink at 2.2:1 and #32c471 dark ink at 2.3:1, both unreadable,
+ * both silent about it. Asking which of the two inks actually wins holds the
+ * worst case at 4.40:1 across 6, 10 and 16 samples in both themes.
+ */
+export const inkOn = (fill) =>
+  contrast(fill, ACCENT_INK[1]) >= contrast(fill, ACCENT_INK[0])
+    ? ACCENT_INK[1]
+    : ACCENT_INK[0];
+
+/* -------------------------------------------------------------------------- */
+/* Sampling                                                                   */
+/* -------------------------------------------------------------------------- */
+
 /** One point on the ramp. `p` runs 0 (the accent) to 1 (the tail). */
 export const sampleAt = (from, to, p) => {
   const a = hexToOklab(from);

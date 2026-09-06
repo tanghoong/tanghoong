@@ -21,7 +21,10 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { ENDPOINTS, ramp, sampleAt } from './ramp.mjs';
+// The colour module: endpoints, sampling and the two measurements that decide
+// whether a mark is legible. scripts/contrast.mjs checks the same functions,
+// so the guard and the generator cannot drift apart.
+import { ENDPOINTS, inkOn, ramp, sampleAt } from './ramp.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = join(ROOT, 'assets');
@@ -82,38 +85,6 @@ const QUIET = {
   light: { fill: '#c7c7cc', edge: '#a1a1a6' },
   dark: { fill: '#3f3f44', edge: '#6e6e73' },
 };
-
-const luminance = (hex) => {
-  const n = parseInt(hex.slice(1), 16);
-  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
-    const c = v / 255;
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-};
-
-const contrast = (a, b) => {
-  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
-  return (hi + 0.05) / (lo + 0.05);
-};
-
-/**
- * Ink that stays legible on an arbitrary ramp fill -- the treemap tiles and
- * the growth bars that print their figure inside the bar.
- *
- * 🔴 Measure, do not threshold. This was `luminance > 0.42 ? dark : white`,
- * which is the mistake the design system calls out by name: as the ramp
- * lightens the ink has to flip, and a fixed cut-off puts the flip in the wrong
- * place. Against the 10-sample ramp that heuristic bottomed out at 2.25:1 --
- * #5abf9a took white ink at 2.2:1 and #32c471 took dark at 2.3:1, both of them
- * unreadable, both of them "passing" because nothing checked. Asking which of
- * the two inks actually wins lands the flip where it belongs and holds the
- * worst case at 4.40:1 across 6, 10 and 16 samples, in both themes.
- *
- * The two candidates are the system's own --accent-ink pair, not black/white.
- */
-const inkOn = (hex) =>
-  contrast(hex, '#04140b') >= contrast(hex, '#ffffff') ? '#04140b' : '#ffffff';
 
 /**
  * §2: there is exactly ONE accent, and it is green. Every data mark on every

@@ -2,7 +2,8 @@
 kind: maintenance notes
 intent: "How the profile cards are generated, and the things that will bite whoever touches this next"
 created: "2026-08-30"
-covers: "scripts/generate-cards.mjs · scripts/ramp.mjs · .github/workflows/profile.yml · assets/*.svg"
+revised: "2026-09-06 — §4.3 the ramp moved to OKLab; §4.4 adds the contrast guard"
+covers: "scripts/generate-cards.mjs · scripts/ramp.mjs · scripts/contrast.mjs · .github/workflows/profile.yml · assets/*.svg"
 ---
 
 # 04 · PROFILE CARDS
@@ -208,6 +209,42 @@ a cut-off.
 
 `--check` runs in CI before the cards are built, so a well-meaning tidy-up of
 the OKLab matrices fails the workflow instead of quietly shifting every colour.
+
+`ramp.mjs` is also the repo's colour module — `luminance`, `contrast`,
+`deltaE`, `inkOn` and the two floors live there and are imported by both the
+generator and the guard, so the thing being checked is the thing that ships.
+
+### 4.4 The contrast guard — `scripts/contrast.mjs`
+
+```bash
+node scripts/contrast.mjs          # report all 40 checks
+node scripts/contrast.mjs --fail   # exit 1 on any failure (this is what CI runs)
+```
+
+The design system's own `contrast.mjs` parses `tokens.css`, because over there
+the stylesheet is the artefact. This repo has no stylesheet: its tokens are
+literals inside `generate-cards.mjs` and figures written into
+03-DESIGN-SYSTEM.md. So this one reads **both** and fails when they disagree —
+with each other, or with the arithmetic. It covers:
+
+| Group | What it asserts |
+| --- | --- |
+| Accent | Every ratio in §2's table, recomputed; each ≥ AA; the ink is one of the two `--accent-ink` values |
+| Ink | `--text`, `--text-2`, `--text-3` on `--bg`, both themes |
+| Quiet grey | The `QUIET` block in the doc and in the generator are **the same four hexes**; grey separates from the accent by ≥ 3:1; `edge` still draws the shape when the fill alone is 1.6:1 |
+| Ramp | Endpoints match §2.2; the six-sample case clears the ΔE 0.045 legend floor; steps stay within 1.15× of even; monotonic in luminance at 4/6/10/16 (that *is* the greyscale check) |
+| Label ink | `inkOn()`'s worst case ≥ 4.40:1 at every sample count, both themes |
+
+🔴 It found real breakage on its first run: §2's closing paragraph claimed
+17.4 / 18.1 for `--text`, 4.8 / 5.2 for `--text-3` and 6.4 / 7.1 for the
+accent. **None of the six were right** — inherited from an earlier palette,
+contradicting the accent table eight lines above them, and read as verified for
+a fortnight because nothing recomputed them. A number in prose is a claim
+nobody re-checks; that is the whole reason this script exists.
+
+⚠️ When you change a token, the failure tells you both numbers — the computed
+one and the documented one. **Fix whichever is actually wrong.** Editing the
+document to match a bad colour passes the check and defeats it.
 
 ---
 

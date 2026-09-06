@@ -2,8 +2,8 @@
 kind: design system
 intent: "Apple / iOS visual language, expressed as tokens rather than as a mood"
 created: "2026-08-27"
-revised: "2026-08-30 — §2 gains the rise-and-fall rule: one accent holds, grey carries the fall"
-verified_by: "npm run design — fails the build if this document and global.css disagree"
+revised: "2026-09-06 — §2.2 adds the OKLab chart ramp; §2's contrast figures are now computed, and three stale ones were wrong"
+verified_by: "node scripts/contrast.mjs --fail — recomputes every ratio in §2 from the hex the code ships, and fails CI when this document and scripts/ disagree"
 ---
 
 # 03 · DESIGN SYSTEM
@@ -315,10 +315,26 @@ the card because it opened on a Sunday and closed on a quiet Saturday). A
 column height cannot lie that way. Ask what the number *is* before choosing the
 mark.
 
-**Contrast, verified rather than assumed.** `--text` on `--bg` is 17.4:1 light
-and 18.1:1 dark. `--text-3` on `--bg` is 4.8:1 light and 5.2:1 dark — above AA
-for body text, and it is only ever used at 15 px or larger. `--accent` on `--bg`
-is 6.4:1 light and 7.1:1 dark.
+**Contrast, verified rather than assumed** — and now verified by something
+other than a sentence. Every figure in this section is recomputed from the hex
+the code ships by `node scripts/contrast.mjs --fail`, which runs in CI before
+the cards are built.
+
+| Ink on `--bg` | Light | Dark |
+| --- | --- | --- |
+| `--text` | 16.28 | 19.29 |
+| `--text-2` | 7.65 | 8.16 |
+| `--text-3` | 4.91 | 5.80 |
+
+`--text-3` clears AA for body text and is only ever used at 15 px or larger.
+`--accent` on `--bg` is in the table above — 5.63 light and 16.09 dark.
+
+⚠️ This paragraph used to claim 17.4 / 18.1 for `--text`, 4.8 / 5.2 for
+`--text-3`, and 6.4 / 7.1 for the accent. None of the six were right: they were
+inherited from an earlier palette, they contradicted the accent table eight
+lines above them in this same document, and they read as verified for a
+fortnight because nothing recomputed them. That is the entire argument for
+`contrast.mjs` — a number in prose is a claim nobody re-checks.
 
 **`theme-color`**, so the iOS browser chrome matches the page:
 
